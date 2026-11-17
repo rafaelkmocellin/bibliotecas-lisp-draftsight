@@ -1,0 +1,604 @@
+============================================================
+MANUAL DE INSTALACAO - MEDLIN (Medidor de Linhas e Percursos)
+DraftSight
+============================================================
+
+Criado por: RAFAEL_K
+
+Este manual explica como configurar, em um computador novo, os
+comandos personalizados MEDLIN, MEDLININVERSO e DELLIN no
+DraftSight.
+
+O MEDLIN mede um comprimento ao longo de um percurso formado por
+LINE, ARC e/ou LWPOLYLINE - mesmo que os objetos NAO estejam
+soldados/unidos em uma unica entidade (ele conecta pelos pontos de
+extremidade coincidentes automaticamente). So existe UM arquivo
+necessario:
+
+      MEDLIN.LSP
+
+
+------------------------------------------------------------
+1. ARQUIVO NECESSARIO
+------------------------------------------------------------
+
+  MEDLIN.LSP
+     - Contem todo o codigo dos comandos MEDLIN, MEDLININVERSO e
+       DELLIN.
+     - Nao depende de nenhum outro arquivo.
+     - Nao usa vl-load-com nem vlax-curve-* (funcoes que dependem
+       de ActiveX/COM) - por isso funciona mesmo em instalacoes
+       do DraftSight onde a extensao COM falha ao carregar.
+
+
+------------------------------------------------------------
+2. PASSO A PASSO NO COMPUTADOR
+------------------------------------------------------------
+
+PASSO 1 - Criar a pasta de suporte
+  Crie uma pasta fixa para guardar o arquivo, por exemplo:
+      C:\Users\<seu usuario>\Documents\DraftSight_Lisp\
+
+PASSO 2 - Copiar o arquivo
+  Copie para essa pasta:
+      - MEDLIN.LSP
+
+PASSO 3 - Abrir o DraftSight e configurar o caminho de busca
+  1. Abra o DraftSight.
+  2. Digite o comando: OPTIONS  (ou va em Ferramentas > Opcoes)
+  3. Va em: Localizacao de Arquivos > Sistema >
+            Caminho de Pesquisa de Arquivos de Suporte
+  4. Clique em "Novo..." e selecione a pasta criada no Passo 1
+     (ex: C:\Users\<seu usuario>\Documents\DraftSight_Lisp\)
+  5. Clique em OK para salvar e feche a janela de Opcoes.
+
+PASSO 4 - Fechar e abrir o DraftSight novamente
+  Feche o programa e abra de novo, para garantir que o caminho novo
+  seja reconhecido.
+
+PASSO 5 - Testar se o MEDLIN.LSP esta sendo encontrado ***(opcional)***
+  Na linha de comando, digite:
+      (findfile "MEDLIN.LSP")
+  Se retornar o caminho do arquivo, esta tudo certo.
+  Se retornar "nil", revise o Passo 3 (o caminho nao foi adicionado
+  corretamente).
+
+PASSO 6 - Carregar o arquivo manualmente (primeira vez / teste) ***(opcional)***
+  Digite (ajustando o caminho para o seu usuario):
+      (load "C:\\Users\\<seu usuario>\\Documents\\DraftSight_Lisp\\MEDLIN.LSP")
+  (repare nas barras invertidas duplas \\ )
+
+  Deve aparecer a mensagem:
+      MEDLIN.lsp carregado. Comandos: MEDLIN, MEDLININVERSO, DELLIN.
+
+  Esse carregamento manual vale so ate fechar o DraftSight. Para
+  carregar sozinho (automaticamente) toda vez que o programa abrir,
+  coloque tambem o STARTUP.LSP nessa mesma pasta: ele carrega todos
+  os .lsp da pasta, sem precisar rodar o (load ...) de novo.
+
+
+------------------------------------------------------------
+3. COMANDOS DISPONIVEIS
+------------------------------------------------------------
+
+  MEDLIN
+      - Selecione um ou varios objetos (LINE, ARC, LWPOLYLINE) que
+        formam o percurso a medir - nao precisam estar unidos.
+      - Clique o ponto de partida sobre o percurso.
+      - Aparece uma SETA AMARELA temporaria (tamanho fixo,
+        *ML-SETA-TAMANHO*) apontando o sentido de referencia
+        (positivo) do percurso, sempre o mesmo fisicamente,
+        independente de qual objeto foi clicado primeiro.
+      - Informe o comprimento a percorrer:
+            > valor POSITIVO  = usa a config. "...Positivo"
+            > valor NEGATIVO  = usa a config. "...Negativo"
+        (ver secao 4 - variaveis de sentido)
+      - A seta some assim que o comprimento e informado.
+      - Marca o ponto final com:
+            > um POINT exatamente no local
+            > uma linha perpendicular curta que "corta" o
+              segmento naquele ponto (o marcador)
+            > uma anotacao "Use DELLIN p/ apagar"
+        Tudo na camada MEDLIN_MARCADOR, travada (Lock) logo em
+        seguida - nao editavel/apagavel sem destravar.
+      - Pergunta de que lado da linha ficam as cotas (um unico
+        clique vale para todos os trechos). ESC = nao criar cotas.
+      - Cria uma COTA ALINHADA PARA CADA SEGMENTO percorrido
+        (estilo cascata), na camada MEDLIN_COTAS (cor ciano). A
+        soma de todas as cotas sempre bate com o valor digitado.
+
+  MEDLININVERSO
+      - Fluxo identico ao MEDLIN (mesma selecao, mesmo clique de
+        partida, mesma seta amarela apontando o MESMO sentido
+        fisico de referencia).
+      - A diferenca esta nas variaveis de sentido: por padrao,
+        percorre o sentido CONTRARIO ao que o MEDLIN faria com o
+        mesmo valor digitado (ver secao 4).
+      - MODO COMPLEMENTO: em vez de cotar o trecho digitado, cota
+        automaticamente TODO O RESTANTE do percurso (o
+        complemento), em cascata - cobrindo a peca inteira, exceto
+        o trecho entre o ponto de partida e o marcador (que fica
+        sem cota).
+      - O marcador (ponto + risco + anotacao) e criado do mesmo
+        jeito que no MEDLIN.
+
+  DELLIN
+      - Apaga TODAS as cotas e marcadores criados por MEDLIN ou
+        MEDLININVERSO, em QUALQUER execucao anterior (procura em
+        todo o desenho pelas camadas MEDLIN_MARCADOR e
+        MEDLIN_COTAS, nao so a ultima execucao).
+      - Destrava a camada do marcador automaticamente antes de
+        apagar.
+
+  Suporte automatico de entidade, em MEDLIN e MEDLININVERSO:
+      - LINE                        : segmento reto direto
+      - ARC                         : convertido para o mesmo
+                                       formato interno de "bulge"
+                                       usado pela LWPOLYLINE
+      - LWPOLYLINE                  : decomposta em segmentos
+                                       (retos e com arco/bulge),
+                                       inclusive fechada (closed)
+      - Varios objetos separados    : conectados automaticamente
+                                       pelos pontos de extremidade
+                                       coincidentes (tolerancia
+                                       *ML-TOL*)
+      - POLYLINE antiga (2D pesada), ELIPSE, SPLINE: nao suportado
+
+
+------------------------------------------------------------
+4. VARIAVEIS DE CONFIGURACAO (topo do arquivo)
+------------------------------------------------------------
+
+  *ML-TOL*
+      Tolerancia (em unidades de desenho) para considerar dois
+      pontos de extremidade "coincidentes" ao conectar objetos
+      separados. Padrao: 0.0001
+
+  *ML-DARKRED*
+      Cor verdadeira (true color) usada no marcador. Padrao:
+      9109504 = RGB(139,0,0), vermelho escuro.
+
+  *ML-SETA-TAMANHO*
+      Comprimento FIXO (em unidades de desenho) da seta amarela
+      de referencia de sentido. Padrao: 20.0
+      Ajuste esse numero se a seta ficar grande/pequena demais
+      para a escala das suas pecas.
+
+  Variaveis de SENTIDO (12 no total, 6 por comando) - cada uma tem
+  uma versao "Positivo" (usada quando o comprimento digitado e
+  >= 0) e uma versao "Negativo" (usada quando e < 0):
+
+    MEDLINsentidoPercursoMarcaPositivo / Negativo
+    MEDLINsentidoPercursoCotaPositivo  / Negativo
+    MEDLINsentidoCotaPositivo          / Negativo
+
+    MEDLININVERSOsentidoPercursoMarcaPositivo / Negativo
+    MEDLININVERSOsentidoPercursoCotaPositivo  / Negativo
+    MEDLININVERSOsentidoCotaPositivo          / Negativo
+
+  O que cada uma controla:
+
+    ...PercursoMarca -> para que lado o PONTO/MARCADOR final
+        caminha ao longo do percurso. 1.0 = sentido da seta
+        amarela. -1.0 = sentido oposto.
+
+    ...PercursoCota -> de que LADO da linha as COTAS ficam, em
+        relacao ao sentido do percurso (mantem o lado clicado
+        consistente mesmo quando o percurso anda "pra tras").
+        1.0 = normal. -1.0 = invertido.
+
+    ...Cota -> qual ponta de cada trecho e a "primeira" linha de
+        extensao da cota (efeito so cosmetico, nao muda posicao
+        nem valor da cota). 1.0 = normal. -1.0 = invertido.
+
+  Os valores nao sao calculados por multiplicacao - cada caso
+  (positivo/negativo) tem seu proprio numero fixo, entao da pra
+  configurar qualquer combinacao independente.
+
+
+------------------------------------------------------------
+5. RESOLUCAO DE PROBLEMAS COMUNS
+------------------------------------------------------------
+
+- "Comando nao reconhecido MEDLIN":
+     O MEDLIN.LSP nao foi carregado. Rode o Passo 6 manualmente e
+     revise o caminho de pesquisa (Passo 3).
+
+- "Nao e possivel carregar o arquivo" ao usar (load ...):
+     Verifique se o arquivo foi salvo como texto puro (.LSP), e nao
+     como .LSP.txt. Ative "Mostrar extensoes de arquivo" no Windows
+     para conferir. Se estiver usando o Bloco de Notas, salve com
+     codificacao ANSI (nao UTF-8 com BOM).
+
+- "Erro: falha ao carregar a extensao COM":
+     Nao deve mais acontecer - a versao atual do MEDLIN.LSP nao usa
+     nenhuma funcao vlax-/vla-/vl-load-com. Se aparecer, confirme
+     que esta usando o arquivo mais recente.
+
+- Uma medicao anterior "contamina" a selecao da proxima:
+     Nao deve mais ocorrer - o MEDLIN ja ignora automaticamente
+     qualquer entidade que esteja nas camadas MEDLIN_MARCADOR e
+     MEDLIN_COTAS na hora de "Especificar entidades". Se ainda
+     assim aparecer um numero de segmentos maior do que o esperado,
+     confirme que esta usando o arquivo mais recente.
+
+- A seta amarela aponta para um lado diferente do esperado:
+     Isso e so uma referencia visual fixa (sempre o mesmo sentido
+     fisico, independente do objeto clicado). Quem decide se o
+     valor positivo segue a seta ou vai para o lado oposto sao as
+     variaveis "...PercursoMarcaPositivo/Negativo" (secao 4).
+
+- O marcador ainda pode ser selecionado mesmo estando travado:
+     "Travar" (Lock) e o unico mecanismo nativo do DraftSight para
+     isso. Em algumas versoes, objetos travados ainda podem ser
+     clicados/realcados (so nao podem ser movidos/apagados sem
+     destravar antes ou confirmar). Nao ha, no DXF/LISP padrao, uma
+     propriedade separada de "invisivel para selecao".
+
+- As cotas em cascata ficam com o lado errado numa curva fechada:
+     O lado (esquerda/direita) e definido por UM clique so, aplicado
+     a todos os trechos com o mesmo deslocamento. Em curvas bem
+     fechadas isso pode nao acompanhar a curvatura local perfeitamente
+     em 100% dos trechos - e uma limitacao conhecida do metodo atual.
+
+- Quero apagar so as cotas/marcador da ULTIMA execucao, nao de todas:
+     O DELLIN atual apaga tudo que estiver nas camadas
+     MEDLIN_MARCADOR / MEDLIN_COTAS, de qualquer execucao anterior.
+     Nao ha (ainda) opcao de apagar so a ultima.
+
+
+============================================================
+FIM DO MANUAL
+============================================================
+
+
+
+
+============================================================
+INICIO DO CODIGO BEM EXPLICADO
+============================================================
+
+O codigo completo esta no arquivo MEDLIN.lsp (nao reproduzido aqui
+para nao duplicar o arquivo - use-o como referencia junto com esta
+explicacao).
+
+
+------------------------------------------------------------
+6. EXPLICACAO DO CODIGO, PARTE POR PARTE (PARA QUEM FOR EDITAR)
+------------------------------------------------------------
+
+Este capitulo explica o que cada trecho do MEDLIN.lsp faz. A ideia
+e servir de referencia para quem precisar entender, ajustar ou usar
+este arquivo como exemplo para criar outros comandos parecidos.
+
+
+------------------------------------------------------------
+6.1 - VARIAVEIS GLOBAIS DE CONFIGURACAO (topo do arquivo)
+------------------------------------------------------------
+
+    *ML-TOL*, *ML-DARKRED*, *ML-SETA-TAMANHO*
+    + as 12 variaveis "...sentido...Positivo/Negativo"
+
+Ja explicadas em detalhe na secao 4 deste manual. Ficam todas
+juntas no topo de proposito, para nao precisar caçar valores
+espalhados pelo meio do codigo quando for ajustar alguma coisa.
+
+  - Nomes em MAIUSCULO com asterisco (*NOME*) sao so uma convencao
+    de AutoLISP para indicar "isto e uma constante/configuracao
+    global", nao um requisito da linguagem.
+
+
+------------------------------------------------------------
+6.2 - FUNCOES MATEMATICAS/GEOMETRICAS AUXILIARES (prefixo ML:)
+------------------------------------------------------------
+
+Todas as funcoes auxiliares comecam com "ML:" (Medidor de Linhas)
+para nao conflitar com nomes de outras rotinas que voce ja tenha
+carregadas no DraftSight.
+
+  ML:pi ()
+      AutoLISP nao tem uma constante "pi" pronta - essa funcao
+      devolve o valor de pi calculando 4*atan(1).
+
+  ML:max2 (a b) / ML:min2 (a b)
+      Maximo/minimo entre dois numeros. AutoLISP tambem nao tem
+      "max"/"min" prontos para dois valores simples.
+
+  ML:norm-ang (ang)
+      "Enrola" um angulo em radianos para dentro do intervalo
+      [0, 2*pi) - soma ou subtrai 2*pi ate caber nesse intervalo.
+      Usado para comparar angulos de forma consistente (ver
+      ML:seg-closest, secao 6.4).
+
+  ML:to3d (p)
+      Garante que um ponto tenha 3 coordenadas (X Y Z). Pontos de
+      LWPOLYLINE vem com so 2 (X Y); pontos de LINE ja vem com 3.
+      Uniformiza tudo para o resto do codigo nao precisar se
+      preocupar com isso.
+
+  ML:pt-equal (p1 p2 tol)
+      Compara dois pontos (so X e Y) e diz se estao "coincidentes"
+      dentro de uma tolerancia. Usada para descobrir se a ponta de
+      um objeto encosta na ponta de outro, ao montar a cadeia
+      (secao 6.5).
+
+  ML:set-assoc (lst code val)
+      Funcao de lista generica: dentro de uma lista de pares
+      DXF (codigo . valor), troca o valor de um codigo se ele ja
+      existir, ou adiciona o par no final se nao existir. Usada
+      para sobrescrever o texto (codigo 1) e a cor (codigo 62) das
+      cotas depois de cria-las (secao 6.7).
+
+
+------------------------------------------------------------
+6.3 - FUNCOES DE CAMADA (ML:ensure-layer / ML:set-layer-lock)
+------------------------------------------------------------
+
+  ML:ensure-layer (layerName colorIdx)
+      Cria a camada, com a cor ACI indicada, SE ela ainda nao
+      existir (tblsearch verifica isso antes). Usada para garantir
+      que MEDLIN_MARCADOR e MEDLIN_COTAS sempre existam antes de
+      desenhar qualquer coisa nelas.
+
+  ML:set-layer-lock (layerName lockState)
+      Trava (lockState = T) ou destrava (lockState = nil) uma
+      camada, usando o comando nativo "_.-LAYER" com as opcoes
+      "_LOck"/"_UNLock" - o mesmo mecanismo que rodaria se voce
+      travasse a camada manualmente pelo painel de Camadas. E o
+      metodo mais confiavel disponivel via LISP para impedir edicao
+      acidental do marcador (ver limitacoes na secao 5).
+
+
+------------------------------------------------------------
+6.4 - GEOMETRIA DE SEGMENTOS: RETA E ARCO (funcoes ML:seg-*)
+------------------------------------------------------------
+
+Todo segmento do percurso (venha de uma LINE, de um trecho de
+LWPOLYLINE, ou de um ARC convertido) e representado internamente
+pelos mesmos 3 dados: ponto inicial (p1), ponto final (p2), e um
+valor de "bulge" (b). Bulge = 0.0 significa reta; bulge diferente
+de zero descreve um arco entre p1 e p2 (mesmo formato usado
+internamente pelo DXF para vertices de LWPOLYLINE - por isso ARC
+tambem e convertido para essa mesma representacao, em
+ML:arc-endpoints).
+
+  ML:arc-endpoints (edata)
+      Le uma entidade ARC (centro, raio, angulo inicial/final) e
+      devolve (list p1 p2 bulge) no formato acima, calculando o
+      bulge equivalente com a formula bulge = tan(varredura/4).
+      Isso permite que ARC seja tratado pelo resto do codigo
+      exatamente como um trecho de LWPOLYLINE com arco.
+
+  ML:seg-length (p1 p2 b)
+      Comprimento do segmento. Se b=0, e so a distancia reta entre
+      p1 e p2. Se b<>0, calcula o raio e o angulo de varredura do
+      arco a partir do bulge, e devolve raio * angulo (comprimento
+      de arco).
+
+  ML:seg-arc-info (p1 p2 b)
+      Para segmentos com arco: calcula e devolve (list centroX
+      centroY raio angulo) a partir de p1, p2 e do bulge. Usa a
+      relacao entre bulge, corda e "flecha" do arco (geometria
+      classica de arco por bulge).
+
+  ML:seg-point-at-dist (p1 p2 b s)
+      Dado um segmento e uma distancia "s" percorrida a partir de
+      p1 (ao longo do proprio segmento, reto ou curvo), devolve o
+      ponto exato naquela posicao. Para retas, e so interpolacao
+      linear. Para arcos, usa ML:seg-arc-info e depois avanca o
+      angulo correspondente a "s" ao redor do centro.
+      Esta e a funcao usada para achar o PONTO FINAL da medicao,
+      os pontos de corte de cada cota em cascata, e o ponto da
+      seta amarela.
+
+  ML:seg-closest (P p1 p2 b)
+      Dado um ponto qualquer "P" (o clique do usuario) e um
+      segmento, acha o ponto MAIS PROXIMO de P que esta EM CIMA do
+      segmento (nao so na reta/circulo infinito, mas dentro dos
+      limites reais entre p1 e p2). Devolve 3 coisas: o ponto mais
+      proximo, a distancia local (a partir de p1, ao longo do
+      segmento) ate esse ponto, e a distancia entre P e o ponto
+      encontrado. Para retas usa projecao vetorial simples
+      (ML:closest-t); para arcos, compara o angulo de P em relacao
+      ao centro com a faixa de angulos coberta pelo arco.
+      E a funcao usada para descobrir sobre qual segmento (e em
+      que posicao exata) voce clicou ao indicar o ponto de partida.
+
+
+------------------------------------------------------------
+6.5 - ML:run - A FUNCAO PRINCIPAL (chamada por MEDLIN e MEDLININVERSO)
+------------------------------------------------------------
+
+MEDLIN e MEDLININVERSO nao tem cada um seu proprio codigo completo -
+os dois so chamam a MESMA funcao (ML:run), passando parametros
+diferentes (as 6 variaveis de sentido de cada comando, mais um
+sinal T/nil dizendo se e "modo complemento" ou nao). Isso evita
+duplicar centenas de linhas de codigo repetido.
+
+Fases principais dentro de ML:run:
+
+  FASE 1 - Selecao e montagem do "pool" de segmentos
+      (comando) ssget com filtro (cons 0 "LINE,ARC,LWPOLYLINE") E
+      (cons 8 "~MEDLIN_MARCADOR,MEDLIN_COTAS") - o "~" na frente
+      significa "NAO", entao essa segunda parte exclui qualquer
+      objeto que ja esteja nas camadas do proprio MEDLIN (evita
+      que um marcador/cota de uma execucao anterior "vaze" para
+      dentro da proxima selecao).
+      Cada entidade selecionada e convertida para o formato
+      (p1 p2 bulge) explicado na secao 6.4, e todos vao para tres
+      listas paralelas: segP1, segP2, segBulge (o "pool" de
+      segmentos disponiveis, ainda desconectados entre si).
+
+  FASE 2 - Montagem da CADEIA conectada
+      A partir do ponto clicado (pt0), acha-se o segmento mais
+      proximo no pool (usando ML:seg-closest em cada um). A partir
+      desse segmento "ancora", dois lacos "while" tentam estender a
+      cadeia: um procurando, entre os segmentos ainda nao usados,
+      qual tem uma extremidade coincidente com a PONTA DE TRAS da
+      cadeia atual (ML:pt-equal) - e vai encaixando um apos o outro,
+      "para frente"; outro laco identico faz o mesmo "para tras", a
+      partir da PONTA DA FRENTE. O resultado e uma lista ordenada
+      de segmentos (fP1, fP2, fBulge), cada um ja na orientacao
+      certa (alguns precisam ser "invertidos" - trocar p1 com p2 e
+      inverter o sinal do bulge - se foram encaixados ao contrario).
+      Se a ponta da frente encostar de volta na ponta de tras, a
+      cadeia e marcada como FECHADA (chainClosed).
+
+  FASE 3 - Direcao CANONICA (deterministica)
+      Depois de montada, a cadeia e comparada: se a extremidade
+      "da frente" (posicao 0) tiver X maior que a extremidade "de
+      tras" (ou X igual e Y maior, em caso de empate), a cadeia
+      inteira e INVERTIDA (fP1<->fP2 trocados, bulge com sinal
+      trocado, tudo recalculado). Isso garante que a "posicao 0" do
+      percurso seja sempre a mesma ponta fisica (a de menor X),
+      nao importa qual objeto foi clicado primeiro ou em que ordem
+      foi selecionado - e o que faz a seta amarela nao mudar de
+      lado entre execucoes diferentes no mesmo desenho.
+
+  FASE 4 - Seta amarela de referencia
+      Calcula um ponto um pouco a frente de startDist (a posicao do
+      clique na cadeia), so para achar a DIRECAO; desenha entao uma
+      linha amarela de startPt ate esse ponto, mas com comprimento
+      FIXO (*ML-SETA-TAMANHO*), normalizando o vetor direcao. A
+      entidade e criada com entmakex (que devolve o nome da
+      entidade, diferente de entmake) para poder ser apagada
+      (entdel) logo depois que o comprimento e informado.
+
+  FASE 5 - Comprimento e sentido
+      (getdist ...) pergunta o comprimento. Dependendo do SINAL
+      digitado (positivo ou negativo), sao escolhidas as variaveis
+      "...Positivo" ou "...Negativo" correspondentes (secao 4) para
+      "dir" (sentido do percurso/marcador), "dirCota" (sentido usado
+      no calculo do lado das cotas) e "sentCotaEfetivo" (ordem das
+      linhas de extensao). newDist = startDist + dir*len.
+      Se a cadeia for FECHADA e o resultado passar de fTotal ou for
+      menor que zero, "da a volta" (soma/subtrai fTotal) em vez de
+      simplesmente travar no limite - e o wrapCase (1, -1 ou 0)
+      guarda qual tipo de ajuste ocorreu, usado depois na FASE 7.
+
+  FASE 6 - Marcador
+      Acha o segmento e a posicao exata (localDist) onde newDist
+      cai, calcula o ponto final com ML:seg-point-at-dist. Cria o
+      POINT, calcula a direcao tangente local (comparando dois
+      pontos bem proximos um do outro, um pouco antes e um pouco
+      depois do ponto final) para desenhar o risco perpendicular
+      que "corta" o segmento, cria a anotacao de texto, e por fim
+      TRAVA a camada MEDLIN_MARCADOR.
+
+  FASE 7 - Cotas em cascata (e modo complemento)
+      Calcula "middleInterval" (o trecho entre startDist e newDist)
+      e "outerIntervals" (os dois pedacos de fora desse trecho, ate
+      0 e ate fTotal). Dependendo do wrapCase, um desses vira o
+      trecho "medido" (intervals) e o outro vira o "complemento"
+      (complementIntervals) - a matematica e a mesma nos dois casos,
+      so muda qual e qual.
+      Se modoComplemento for T (MEDLININVERSO), "intervals" e
+      TROCADO pelo complemento inteiro - ou seja, cota-se o RESTO
+      do percurso, nao o trecho digitado.
+      Para cada intervalo em "intervals", percorre-se todos os
+      segmentos da cadeia (fP1/fP2/fBulge/fCum/fLen) calculando a
+      SOBREPOSICAO entre o segmento e o intervalo (ov1/ov2) - se
+      houver sobreposicao real, um pedaco (subP1 a subP2) e
+      adicionado a lista final "contribList". Isso e o que permite
+      que um trecho medido corte um segmento "no meio", gerando uma
+      cota so daquele pedaco (as "lascas" finas que aparecem perto
+      das quinas quando o corte nao cai exatamente num vertice).
+
+  FASE 8 - Desenho das cotas
+      Pergunta o lado (um unico clique) e usa o produto escalar
+      entre o vetor perpendicular do primeiro trecho e o vetor
+      ate o ponto clicado para decidir o sinal (signMul) - esse
+      mesmo sinal e reaproveitado para todos os trechos seguintes,
+      mantendo o lado visualmente consistente.
+      Para cada trecho em contribList: calcula a direcao
+      perpendicular (jah considerando dirCota), acha o ponto de
+      posicionamento da linha de cota (deslocado por offsetDist),
+      e chama o comando nativo "_.DIMALIGNED" passando os dois
+      pontos do trecho (na ordem normal ou invertida, conforme
+      sentCotaEfetivo) e o ponto de posicionamento.
+      Depois de criada, pega a ultima entidade (entlast), e
+      SOBRESCREVE o texto (codigo DXF 1) com o comprimento real do
+      trecho (em vez do valor medido automaticamente pelo
+      DIMALIGNED, que seria a distancia em linha reta - diferente
+      do comprimento real quando ha curva no meio) e forca a cor
+      ciano (codigo 62 = 4) via ML:set-assoc + entmod + entupd.
+      Antes do laco, CLAYER e DIMCLRD/E/T sao trocados
+      temporariamente (e restaurados no final) para garantir que
+      as cotas nascam na camada e cor certas.
+
+
+------------------------------------------------------------
+6.6 - TRATAMENTO DE ERRO (*error* dentro de ML:run)
+------------------------------------------------------------
+
+No inicio de ML:run, a funcao *error* padrao do DraftSight e
+substituida por uma versao propria, que:
+  - Apaga a seta amarela temporaria (tempEnt), se ainda existir -
+    importante porque um ESC no meio do (getdist ...) pode gerar um
+    cancelamento "abrupto" que pularia a linha de limpeza normal.
+  - Restaura CLAYER e DIMCLRD/DIMCLRE/DIMCLRT para os valores
+    originais, caso o cancelamento ocorra durante a criacao das
+    cotas (fase 8).
+  - Devolve o *error* original do DraftSight antes de terminar,
+    para nao deixar a substituicao "vazando" para outros comandos.
+Isso garante que, em qualquer ponto que voce cancelar com ESC, o
+desenho nao fica com sobras temporarias nem configuracoes trocadas.
+
+
+------------------------------------------------------------
+6.7 - COMANDOS (c:MEDLIN, c:MEDLININVERSO, c:DELLIN)
+------------------------------------------------------------
+
+Em AutoLISP, qualquer funcao cujo nome comeca com "c:" vira um
+COMANDO que pode ser digitado direto na linha de comando do
+DraftSight.
+
+  c:MEDLIN ()
+      Chama ML:run passando as 6 variaveis "MEDLINsentido..." e
+      nil no ultimo parametro (modoComplemento = desligado).
+
+  c:MEDLININVERSO ()
+      Chama ML:run passando as 6 variaveis
+      "MEDLININVERSOsentido..." e T no ultimo parametro
+      (modoComplemento = ligado).
+
+  c:DELLIN ( / ss1 ss2 total)
+      Destrava a camada MEDLIN_MARCADOR, faz duas selecoes com
+      ssget "_X" (que procura em TODO o desenho, nao so no que
+      esta visivel na tela) filtrando por camada - uma para
+      MEDLIN_MARCADOR, outra para MEDLIN_COTAS - e apaga tudo que
+      encontrar com "_.ERASE". Informa quantos objetos foram
+      removidos.
+
+
+------------------------------------------------------------
+6.8 - IDEIAS PARA QUEM FOR ADAPTAR ESTE CODIGO
+------------------------------------------------------------
+
+  - Para dar suporte a mais tipos de entidade (ex: ELIPSE, SPLINE,
+    POLYLINE antiga), seria necessario adicionar um novo bloco de
+    conversao (parecido com ML:arc-endpoints) que transforme aquele
+    tipo em uma sequencia de segmentos (p1 p2 bulge), e incluir o
+    tipo no filtro do ssget (secao 6.5, FASE 1).
+
+  - Para mudar a aparencia do marcador (por exemplo, usar um bloco
+    em vez de linhas soltas), edite a FASE 6 de ML:run - e so
+    trocar os entmake de LINE/TEXT por uma insercao de bloco
+    (comando "_.INSERT" ou entmake de INSERT).
+
+  - Para permitir apagar so a ULTIMA execucao (em vez de tudo),
+    seria preciso guardar, de alguma forma persistente (por exemplo
+    em XDATA nas proprias entidades, com um numero de execucao), a
+    qual "rodada" cada marcador/cota pertence, e filtrar o DELLIN
+    por esse numero.
+
+  - Para reaproveitar a logica de conectar segmentos soltos (FASE 1
+    e 2 de ML:run) em outro comando (por exemplo, um "PERLIN" para
+    medir perimetro total sem precisar unir os objetos), essas duas
+    fases podem ser extraidas para uma funcao propria que devolva
+    a cadeia montada (fP1 fP2 fBulge fCum fLen fTotal), pronta para
+    qualquer calculo que precise do percurso inteiro.
+
+============================================================
+FIM DA EXPLICACAO
+============================================================

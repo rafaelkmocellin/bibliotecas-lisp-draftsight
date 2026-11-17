@@ -1,0 +1,624 @@
+============================================================
+MANUAL DE INSTALACAO - COMANDO PIQUE (DraftSight)
+============================================================
+
+Criado por RAFAEL_K
+
+Este manual explica como configurar, em um computador novo, os
+comandos personalizados PIQUE, -PIQUE, PK, -PK, ADAPTPIQUE e
+-ADAPTPIQUE no DraftSight.
+
+Diferente de versoes anteriores deste comando, o PIQUE NAO usa
+bloco nenhum. Ele desenha o simbolo do piquete direto em linhas
+retas (comando LINE), calculadas na hora. Por isso, so existe UM
+arquivo necessario:
+
+      PIQUE.LSP
+
+
+------------------------------------------------------------
+1. ARQUIVO NECESSARIO
+------------------------------------------------------------
+
+  PIQUE.LSP
+     - Contem todo o codigo dos comandos PIQUE, -PIQUE, PK, -PK,
+       ADAPTPIQUE e -ADAPTPIQUE.
+     - Nao depende de nenhum outro arquivo (nao precisa mais de
+       PIKE.dwg nem de nenhum bloco previamente inserido).
+
+
+------------------------------------------------------------
+2. PASSO A PASSO NO COMPUTADOR
+------------------------------------------------------------
+
+PASSO 1 - Criar a pasta de suporte
+  Crie uma pasta fixa para guardar o arquivo, por exemplo:
+      C:\Users\<seu usuario>\Documents\DraftSight_Lisp\
+
+PASSO 2 - Copiar o arquivo
+  Copie para essa pasta:
+      - PIQUE.LSP
+
+PASSO 3 - Abrir o DraftSight e configurar o caminho de busca
+  1. Abra o DraftSight.
+  2. Digite o comando: OPTIONS  (ou va em Ferramentas > Opcoes)
+  3. Va em: Localizacao de Arquivos > Sistema >
+            Caminho de Pesquisa de Arquivos de Suporte
+  4. Clique em "Novo..." e selecione a pasta criada no Passo 1
+     (ex: C:\Users\<seu usuario>\Documents\DraftSight_Lisp\)
+  5. Clique em OK para salvar e feche a janela de Opcoes.
+
+PASSO 4 - Fechar e abrir o DraftSight novamente
+  Feche o programa e abra de novo, para garantir que o caminho novo
+  seja reconhecido.
+
+PASSO 5 - Testar se o PIQUE.LSP esta sendo encontrado ***(opcional)***
+  Na linha de comando, digite:
+      (findfile "PIQUE.LSP")
+  Se retornar o caminho do arquivo, esta tudo certo.
+  Se retornar "nil", revise o Passo 3 (o caminho nao foi adicionado
+  corretamente).
+
+PASSO 6 - Carregar o arquivo manualmente (primeira vez / teste) ***(opcional)***
+  Digite (ajustando o caminho para o seu usuario):
+      (load "C:\\Users\\<seu usuario>\\Documents\\DraftSight_Lisp\\PIQUE.LSP")
+  (repare nas barras invertidas duplas \\ )
+
+  Deve aparecer a mensagem:
+      PIQUE.LSP (v21) - Encontrado Comandos
+      Comandos....: PIQUE / -PIQUE / PK / -PK (tamanho padrao
+      4mm/4mm), ADAPTPIQUE / -ADAPTPIQUE (abertura e profundidade
+      customizaveis).
+
+  Esse carregamento manual vale so ate fechar o DraftSight. Para
+  carregar sozinho (automaticamente) toda vez que o programa abrir,
+  coloque tambem o STARTUP.LSP nessa mesma pasta: ele carrega todos
+  os .lsp da pasta, sem precisar rodar o (load ...) de novo.
+
+
+
+------------------------------------------------------------
+3. COMANDOS DISPONIVEIS
+------------------------------------------------------------
+
+  PIQUE
+      - Um clique na linha, polilinha, circulo ou arco.
+      - Detecta a direcao (tangente) automaticamente no ponto clicado.
+      - Desenha o "V" do piquete com tamanho padrao:
+            Abertura no topo (sobre a linha) : 4 mm
+            Profundidade (ate a ponta)       : 4 mm
+      - Corta a entidade original exatamente na abertura do "V".
+
+  -PIQUE
+      - Identico ao PIQUE, mas com o "V" virado para o lado oposto
+        (use quando o "V" sair apontando para o lado errado).
+
+  PK / -PK
+      - Atalhos curtos de PIQUE e -PIQUE (mesmo comportamento).
+
+  ADAPTPIQUE
+      - Igual ao PIQUE, mas pergunta o tamanho antes de inserir:
+            "Abertura no topo, sobre a linha, em mm [4.00]: "
+            "Profundidade do V, ate a ponta, em mm [4.00]: "
+      - Aperte Enter em qualquer uma das perguntas para manter o
+        valor padrao (mostrado entre colchetes).
+      - Util quando voce precisa de um piquete maior/menor pontualmente,
+        sem mudar o padrao dos comandos PIQUE / -PIQUE.
+
+  -ADAPTPIQUE
+      - Identico ao ADAPTPIQUE (pede o tamanho), mas com o "V" virado
+        para o lado oposto (use quando sair apontando para o lado
+        errado, com o tamanho customizado).
+
+  Suporte automatico de entidade, em todos os 4 comandos acima:
+      - Linha reta                : tangente exata
+      - Polilinha (segmentos retos): tangente do segmento clicado,
+                                      com trava para nao ultrapassar
+                                      quinas/vertices vizinhos
+      - Circulo                   : tangente perpendicular ao raio,
+                                      pontos reencaixados na curva
+      - Arco                      : idem ao circulo
+      - Outras entidades (elipse, spline, etc.): nao detecta sozinho;
+                                      pede o angulo manualmente
+
+
+------------------------------------------------------------
+4. RESOLUCAO DE PROBLEMAS COMUNS
+------------------------------------------------------------
+
+- "Comando nao reconhecido PIQUE":
+     O PIQUE.LSP nao foi carregado. Rode o Passo 6 manualmente
+     e revise o caminho de pesquisa (Passo 3).
+
+- "Nao e possivel carregar o arquivo" ao usar (load ...):
+     Verifique se o arquivo foi salvo como texto puro (.LSP), e nao
+     como .LSP.txt. Ative "Mostrar extensoes de arquivo" no Windows
+     para conferir. Se estiver usando o Bloco de Notas, salve com
+     codificacao ANSI (nao UTF-8 com BOM).
+
+- O "V" aparece do lado errado (para dentro em vez de para fora,
+  ou vice-versa):
+     Desfaça (Ctrl+Z) e use o comando com hifen na frente:
+     -PIQUE (tamanho padrao) ou -ADAPTPIQUE (tamanho customizado).
+
+- O piquete nao alinha exatamente com o corte, em circulos/arcos:
+     Nao deve mais ocorrer na versao atual do script -- os pontos
+     do topo do "V" sao reencaixados sobre a curva real antes de
+     desenhar e antes de cortar. Se acontecer, confirme que esta
+     usando o PIQUE.LSP mais recente.
+
+- Selecao/grip travando o comando:
+     O script ja limpa qualquer selecao ativa no inicio de cada
+     comando. Se ainda assim travar, pressione Esc antes de rodar
+     o comando novamente.
+
+============================================================
+FIM DO MANUAL
+============================================================
+
+
+
+
+
+
+
+
+
+
+
+============================================================
+INICIO DO CODIGO COMENTADO (copia de referencia; a versao atual
+esta em DraftSinght_Lisp/PIQUE.LSP e pode ter pequenas diferencas,
+como os atalhos PK / -PK)
+============================================================
+
+
+;;; ============================================================
+;;; PIQUE.LSP
+;;; Comandos: PIQUE / -PIQUE           (tamanho fixo padrao)
+;;;           ADAPTPIQUE / -ADAPTPIQUE (pede abertura e profundidade)
+;;; Desenha o simbolo do piquete em LINHAS RETAS PURAS (sem bloco),
+;;; alinhado automaticamente (tangente) a linha, polilinha, circulo
+;;; ou arco clicado, e corta a entidade original no mesmo ponto.
+;;; ============================================================
+
+(setq *PIQUE-ABERTURA*      4.0)  ; largura padrao do "V" no topo, sobre a linha (mm)
+(setq *PIQUE-PROFUNDIDADE*  4.0)  ; profundidade padrao do "V", da linha ate a ponta (mm)
+
+;; ---- Erro padrao: avisa onde parou, sem travar o DraftSight ----
+(defun pique-error (msg)
+  (if (not (member msg '("Function cancelled" "quit / exit abort" "console break")))
+    (princ (strcat "\nPIQUE interrompido: " msg))
+  )
+  (princ)
+)
+
+;; ---- Distancia de um ponto a um segmento (2D) ----
+(defun ptSegDist (p a b / ab ap tt proj denom)
+  (setq ab (list (- (car b) (car a)) (- (cadr b) (cadr a))))
+  (setq ap (list (- (car p) (car a)) (- (cadr p) (cadr a))))
+  (setq denom (+ (* (car ab) (car ab)) (* (cadr ab) (cadr ab)) 1e-9))
+  (setq tt (/ (+ (* (car ap) (car ab)) (* (cadr ap) (cadr ab))) denom))
+  (if (< tt 0.0) (setq tt 0.0))
+  (if (> tt 1.0) (setq tt 1.0))
+  (setq proj (list (+ (car a) (* tt (car ab))) (+ (cadr a) (* tt (cadr ab)))))
+  (distance p proj)
+)
+
+;; ---- Projeta um ponto sobre o segmento a-b, travado entre as extremidades ----
+(defun pique-clamp (p a b / ab ap tt denom)
+  (setq ab (list (- (car b) (car a)) (- (cadr b) (cadr a))))
+  (setq ap (list (- (car p) (car a)) (- (cadr p) (cadr a))))
+  (setq denom (+ (* (car ab) (car ab)) (* (cadr ab) (cadr ab)) 1e-9))
+  (setq tt (/ (+ (* (car ap) (car ab)) (* (cadr ap) (cadr ab))) denom))
+  (if (< tt 0.0) (setq tt 0.0))
+  (if (> tt 1.0) (setq tt 1.0))
+  (list (+ (car a) (* tt (car ab))) (+ (cadr a) (* tt (cadr ab))))
+)
+
+;; ---- Detecta angulo tangente + limites do segmento (para travar o corte) ----
+;; Retorna (list angulo ptA ptB) -- ptA/ptB = nil quando nao ha segmento reto
+;; para travar (caso de circulo/arco, onde a curva e reencaixada por osnap)
+(defun pique-info (ent pt / edata etype p1 p2 verts distmin best bestA bestB i a b d)
+  (setq edata (entget ent))
+  (setq etype (cdr (assoc 0 edata)))
+  (cond
+    ((= etype "LINE")
+     (setq p1 (cdr (assoc 10 edata)))
+     (setq p2 (cdr (assoc 11 edata)))
+     (list (angle p1 p2) p1 p2)
+    )
+    ((or (= etype "LWPOLYLINE") (= etype "POLYLINE"))
+     (setq verts nil)
+     (foreach pair edata
+       (if (= (car pair) 10) (setq verts (append verts (list (cdr pair)))))
+     )
+     (setq distmin 1e9 best nil bestA nil bestB nil i 0)
+     (repeat (max 0 (1- (length verts)))
+       (setq a (nth i verts))
+       (setq b (nth (1+ i) verts))
+       (setq d (ptSegDist pt a b))
+       (if (< d distmin)
+         (progn (setq distmin d) (setq best (angle a b)) (setq bestA a) (setq bestB b))
+       )
+       (setq i (1+ i))
+     )
+     (list best bestA bestB)
+    )
+    ((or (= etype "CIRCLE") (= etype "ARC"))
+     (setq p1 (cdr (assoc 10 edata)))   ; centro
+     (list (+ (angle p1 pt) (/ pi 2.0)) nil nil)
+    )
+    (t (list nil nil nil))
+  )
+)
+
+;; ---- Funcao central: desenha o "V" (2 linhas) e corta a entidade original ----
+;; inverter:     T para o "V" apontar para o lado oposto
+;; abertura:     largura do topo do "V", sobre a linha (mm)
+;; profundidade: profundidade do "V", da linha ate a ponta (mm)
+(defun pique-executar (inverter abertura profundidade
+                        / *error* olderr sel ent pt ptLinha angRad
+                        info segmA segmB meiaAbert dirT dirP sinal
+                        pEsq pDir pApice)
+  (setq olderr *error*)
+  (defun *error* (msg) (pique-error msg) (setq *error* olderr))
+
+  ;; 0. Limpa qualquer selecao/grip ativo antes de comecar
+  (sssetfirst nil nil)
+  (setvar "PICKFIRST" 1)
+
+  ;; 1. Um unico clique: seleciona a linha/polilinha/circulo/arco E define o ponto
+  (setq sel (entsel "\nClique na linha/polilinha/circulo/arco, no ponto onde deseja inserir o piquete: "))
+  (if (not sel)
+    (progn (princ "\nNenhuma entidade selecionada. Comando cancelado.") (exit))
+  )
+  (setq ent (car sel))
+  (setq pt  (cadr sel))
+
+  ;; 2. Ajusta o ponto clicado para ficar exatamente em cima da entidade
+  (setq ptLinha (osnap pt "_nea"))
+  (if (not ptLinha) (setq ptLinha pt))
+
+  ;; 3. Detecta o angulo tangente + limites do segmento (para travar o corte)
+  (setq info (pique-info ent ptLinha))
+  (setq angRad (nth 0 info))
+  (setq segmA  (nth 1 info))
+  (setq segmB  (nth 2 info))
+  (if (not angRad)
+    (progn
+      (princ "\nAviso: nao foi possivel detectar a tangente automaticamente para este tipo de entidade.")
+      (setq angRad (* (getreal "\nInforme o angulo manualmente [0]: ") (/ pi 180.0)))
+      (if (not angRad) (setq angRad 0))
+      (setq segmA nil segmB nil)
+    )
+  )
+
+  ;; 3b. Sinal do lado (para onde o "V" aponta) -- T inverte para o outro lado
+  (setq sinal (if inverter -1.0 1.0))
+
+  ;; 4. Vetores unitarios: tangente (ao longo da entidade) e perpendicular
+  (setq dirT (list (cos angRad) (sin angRad)))
+  (setq dirP (list (* sinal (- (sin angRad))) (* sinal (cos angRad))))
+
+  ;; 5. Pontos do topo do "V" (sobre a entidade, +- metade da abertura)
+  (setq meiaAbert (/ abertura 2.0))
+  (setq pEsq (list (- (car ptLinha) (* meiaAbert (car dirT)))
+                    (- (cadr ptLinha) (* meiaAbert (cadr dirT)))))
+  (setq pDir (list (+ (car ptLinha) (* meiaAbert (car dirT)))
+                    (+ (cadr ptLinha) (* meiaAbert (cadr dirT)))))
+
+  ;; 5b. Trava os pontos do topo dentro do segmento real (polilinha reta),
+  ;;     OU, em entidades curvas (circulo/arco), reencaixa exatamente sobre a curva
+  (if (and segmA segmB)
+    (progn
+      (setq pEsq (pique-clamp pEsq segmA segmB))
+      (setq pDir (pique-clamp pDir segmA segmB))
+    )
+    (progn
+      (setq pEsq (cond ((osnap pEsq "_nea")) (T pEsq)))
+      (setq pDir (cond ((osnap pDir "_nea")) (T pDir)))
+    )
+  )
+
+  ;; 6. Ponta do "V" (profundidade)
+  (setq pApice (list (- (car ptLinha) (* profundidade (car dirP)))
+                      (- (cadr ptLinha) (* profundidade (cadr dirP)))))
+
+  ;; 7. Desenha as 2 linhas retas do "V": perna esquerda e perna direita
+  (command "_.LINE" pEsq pApice "")
+  (command "_.LINE" pApice pDir "")
+
+  ;; 8. Corta a entidade original nos mesmos pontos do topo do "V"
+  (command "_.BREAK" ent "_F" pEsq pDir)
+
+  (princ "\nPiquete inserido e entidade cortada.")
+  (princ)
+)
+
+;; ---- Comandos disponiveis ----
+
+;; Tamanho padrao (4mm / 4mm), tangente automatico
+(defun c:PIQUE ()  (pique-executar nil *PIQUE-ABERTURA* *PIQUE-PROFUNDIDADE*))
+(defun c:-PIQUE () (pique-executar T   *PIQUE-ABERTURA* *PIQUE-PROFUNDIDADE*))
+
+;; Tamanho customizavel: pede abertura e profundidade antes de inserir
+(defun pique-adapt-perguntar ( / ab prof)
+  (setq ab (getreal
+    (strcat "\nAbertura no topo, sobre a linha, em mm ["
+            (rtos *PIQUE-ABERTURA* 2 2) "]: ")))
+  (if (not ab) (setq ab *PIQUE-ABERTURA*))
+
+  (setq prof (getreal
+    (strcat "\nProfundidade do V, ate a ponta, em mm ["
+            (rtos *PIQUE-PROFUNDIDADE* 2 2) "]: ")))
+  (if (not prof) (setq prof *PIQUE-PROFUNDIDADE*))
+
+  (list ab prof)
+)
+
+(defun c:ADAPTPIQUE ( / vals)
+  (setq vals (pique-adapt-perguntar))
+  (pique-executar nil (nth 0 vals) (nth 1 vals))
+)
+
+(defun c:-ADAPTPIQUE ( / vals)
+  (setq vals (pique-adapt-perguntar))
+  (pique-executar T (nth 0 vals) (nth 1 vals))
+)
+
+(princ "\nComandos carregados: PIQUE / -PIQUE (tamanho padrao 4mm/4mm), ADAPTPIQUE / -ADAPTPIQUE (abertura e profundidade customizaveis).")
+(princ)
+
+
+============================================================
+5. EXPLICACAO DO CODIGO, PARTE POR PARTE (PARA QUEM FOR EDITAR)
+============================================================
+ 
+Este capitulo explica o que cada trecho do PIQUE.LSP faz. A ideia
+e servir de referencia para quem precisar entender, ajustar ou usar
+este arquivo como exemplo para criar outros comandos parecidos.
+ 
+ 
+------------------------------------------------------------
+5.1 - VARIAVEIS GLOBAIS (linhas 10-11)
+------------------------------------------------------------
+ 
+    (setq *PIQUE-ABERTURA*     4.0)
+    (setq *PIQUE-PROFUNDIDADE* 4.0)
+ 
+Guardam o tamanho PADRAO do piquete (em milimetros), usado pelos
+comandos PIQUE e -PIQUE. Sao os unicos dois numeros que definem o
+tamanho "de fabrica" do simbolo.
+ 
+  - Nomes em MAIUSCULO com asterisco (*NOME*) sao so uma convencao
+    de AutoLISP para indicar "isto e uma constante/configuracao
+    global", nao um requisito da linguagem.
+  - Para mudar o tamanho padrao de TODOS os PIQUE/-PIQUE de uma vez,
+    basta alterar esses dois numeros aqui.
+ 
+ 
+------------------------------------------------------------
+5.2 - pique-error (linhas 13-19)
+------------------------------------------------------------
+ 
+Funcao de tratamento de erro. Serve para que, se o usuario apertar
+Esc ou algo interromper o comando no meio, o DraftSight avise onde
+parou em vez de travar silenciosamente ou mostrar um erro tecnico
+confuso. Mensagens "normais" de cancelamento (Esc, etc.) sao
+ignoradas de proposito -- so erros inesperados aparecem na tela.
+ 
+E chamada de dentro de pique-executar (veja secao 5.6).
+ 
+ 
+------------------------------------------------------------
+5.3 - ptSegDist (linhas 22-31)
+------------------------------------------------------------
+ 
+Funcao matematica auxiliar: calcula a distancia entre um ponto "p"
+e um SEGMENTO DE RETA definido por dois pontos "a" e "b".
+ 
+Isso e diferente de calcular a distancia ate uma RETA infinita --
+aqui, se a projecao do ponto cair fora do trecho entre "a" e "b",
+a distancia e medida ate a extremidade mais proxima (o "tt" e
+travado entre 0.0 e 1.0 nas linhas 27-28).
+ 
+E usada por pique-info (secao 5.5) para descobrir qual segmento de
+uma polilinha esta mais perto do ponto clicado.
+ 
+ 
+------------------------------------------------------------
+5.4 - pique-clamp (linhas 34-42)
+------------------------------------------------------------
+ 
+Muito parecida com a ptSegDist, mas em vez de retornar so a
+DISTANCIA, retorna o PONTO projetado sobre o segmento a-b, travado
+entre as extremidades.
+ 
+Serve para "prender" os pontos de corte do piquete dentro do
+segmento real da polilinha -- evitando que, perto de uma quina, o
+calculo "ultrapasse" o vertice e va parar no segmento vizinho
+(problema que ja apareceu durante o desenvolvimento deste script).
+ 
+ 
+------------------------------------------------------------
+5.5 - pique-info (linhas 47-79)
+------------------------------------------------------------
+ 
+O "cerebro" da deteccao automatica. Recebe a entidade clicada (ent)
+e o ponto exato sobre ela (pt), e devolve uma lista de 3 itens:
+ 
+    (list angulo ptA ptB)
+ 
+  - angulo : a direcao (tangente) da entidade naquele ponto, em
+             RADIANOS (nao graus -- AutoLISP trabalha em radianos
+             internamente).
+  - ptA/ptB: os dois pontos-limite do trecho reto onde o clique
+             caiu (usados depois pela pique-clamp). Ficam "nil"
+             quando a entidade e uma curva (circulo/arco), pois
+             nesse caso nao existe um trecho reto para travar.
+ 
+Usa (entget ent) para ler os dados brutos da entidade (isso e o
+"DXF" da entidade, uma lista de pares codigo/valor) e (assoc 0 ...)
+para descobrir o TIPO da entidade (etype). A partir dai, o (cond...)
+trata cada tipo:
+ 
+  - "LINE"      : pega os pontos inicial (codigo 10) e final
+                   (codigo 11) direto da entidade, calcula o
+                   angulo entre eles com (angle p1 p2).
+ 
+  - "LWPOLYLINE" / "POLYLINE" : varre todos os vertices da
+                   polilinha (todo par com codigo 10), testa a
+                   distancia do ponto clicado a CADA segmento entre
+                   vertices consecutivos usando ptSegDist, e guarda
+                   o segmento mais proximo (bestA/bestB) e seu
+                   angulo.
+ 
+  - "CIRCLE" / "ARC" : pega o centro (codigo 10) e calcula a
+                   tangente como perpendicular a reta entre o
+                   centro e o ponto clicado -- por definicao
+                   geometrica, a tangente de uma curva e sempre
+                   perpendicular ao raio naquele ponto.
+                   (/ pi 2.0) = 90 graus em radianos.
+ 
+  - qualquer outro tipo : retorna nil no angulo, sinalizando para
+                   pique-executar que precisa perguntar o angulo
+                   manualmente ao usuario.
+ 
+ 
+------------------------------------------------------------
+5.6 - pique-executar (linhas 85-162) -- FUNCAO PRINCIPAL
+------------------------------------------------------------
+ 
+E aqui que tudo acontece. Recebe 3 parametros:
+ 
+  - inverter     : T (verdadeiro) ou nil -- se T, desenha o "V"
+                   virado para o lado oposto.
+  - abertura     : largura do topo do "V", em mm.
+  - profundidade : profundidade do "V", em mm.
+ 
+Passo a passo do que ela faz:
+ 
+  PASSO 0 (linhas 92-94): limpa qualquer selecao/grip que esteja
+     ativa na tela antes de comecar (sssetfirst nil nil), evitando
+     que uma entidade ja selecionada bugue o clique seguinte.
+ 
+  PASSO 1 (linhas 96-102): pede UM clique (entsel), que serve tanto
+     para selecionar a entidade (ent) quanto para pegar o ponto
+     aproximado clicado (pt).
+ 
+  PASSO 2 (linhas 104-106): "encaixa" o ponto clicado exatamente em
+     cima da entidade usando (osnap pt "_nea") -- a funcao osnap
+     simula uma referencia a objeto (como as do mouse), aqui do
+     tipo "Nearest" (mais proximo), e funciona mesmo que o clique
+     nao tenha sido pixel-perfeito.
+ 
+  PASSO 3 (linhas 108-120): chama pique-info para descobrir o
+     angulo e os limites do segmento. Se nao conseguir detectar
+     automaticamente (entidade nao suportada), pede o angulo
+     digitado manualmente com (getreal ...).
+ 
+  PASSO 3b (linhas 122-123): define o "sinal" do lado. Se inverter
+     for T, o sinal e -1.0; senao, 1.0. Esse sinal e usado no
+     proximo passo para espelhar a direcao perpendicular.
+ 
+  PASSO 4 (linhas 125-127): calcula dois VETORES UNITARIOS (ou
+     seja, comprimento 1, so indicando direcao):
+       dirT = direcao ao longo da entidade (tangente)
+       dirP = direcao perpendicular a entidade, ja considerando
+              o "sinal" (para onde o V vai apontar)
+     Isso usa trigonometria basica: cos/sin do angulo dao os
+     componentes X/Y do vetor. Girar 90 graus e trocar
+     (x,y) por (-y,x) -- e por isso que dirP usa
+     (- (sin ang)) e (cos ang) em vez de (cos ang) e (sin ang).
+ 
+  PASSO 5 (linhas 129-134): calcula os dois pontos do TOPO do "V"
+     (pEsq e pDir), deslocando o ponto central pela metade da
+     abertura, para os dois lados, na direcao dirT (ao longo da
+     entidade). E so multiplicar o vetor unitario pela distancia
+     desejada e somar/subtrair das coordenadas do ponto central.
+ 
+  PASSO 5b (linhas 136-147): AQUI esta a parte que evita os bugs
+     visuais que apareceram durante os testes:
+       - Se a entidade tem segmento reto conhecido (segmA/segmB
+         vieram preenchidos): usa pique-clamp para travar os
+         pontos do topo dentro desse segmento (nao deixa
+         "vazar" para o segmento vizinho, perto de quinas).
+       - Se NAO tem segmento reto (circulo/arco): usa osnap
+         "_nea" para reencaixar os pontos exatamente sobre a
+         curva (porque o calculo do Passo 5 e uma reta, que nao
+         acompanha a curvatura real).
+ 
+  PASSO 6 (linhas 149-151): calcula a ponta do "V" (pApice),
+     deslocando o ponto central na direcao dirP (perpendicular)
+     pela distancia da profundidade.
+ 
+  PASSO 7 (linhas 153-155): desenha as duas linhas retas do "V"
+     usando o comando nativo do DraftSight (_.LINE), passando os
+     pontos calculados.
+ 
+  PASSO 8 (linha 158): corta a entidade original (_.BREAK) usando
+     a opcao "_F" (First point), que permite informar os DOIS
+     pontos de corte manualmente em vez de depender de onde o
+     usuario clicou.
+ 
+ 
+------------------------------------------------------------
+5.7 - COMANDOS (linhas 164-196)
+------------------------------------------------------------
+ 
+Em AutoLISP, qualquer funcao cujo nome comeca com "c:" vira um
+COMANDO que pode ser digitado direto na linha de comando do
+DraftSight. Por isso:
+ 
+    (defun c:PIQUE () ...)
+ 
+cria o comando "PIQUE". Repare que os comandos em si sao bem
+curtos -- eles so chamam pique-executar com os parametros certos:
+ 
+  PIQUE       -> (pique-executar nil *PIQUE-ABERTURA* *PIQUE-PROFUNDIDADE*)
+                 inverter=nil, tamanho padrao
+ 
+  -PIQUE      -> (pique-executar T   *PIQUE-ABERTURA* *PIQUE-PROFUNDIDADE*)
+                 inverter=T (invertido), tamanho padrao
+ 
+  pique-adapt-perguntar (linhas 171-183): funcao auxiliar (nao e
+     comando, repare que nao comeca com "c:") que so pergunta os
+     dois valores ao usuario, com (getreal ...) mostrando o valor
+     padrao entre colchetes. Se o usuario so apertar Enter (sem
+     digitar nada), getreal retorna nil, e o "if" logo depois
+     substitui pelo valor padrao. Retorna os dois valores numa
+     lista.
+ 
+  ADAPTPIQUE  -> chama pique-adapt-perguntar, depois pique-executar
+                 com inverter=nil e os valores perguntados
+ 
+  -ADAPTPIQUE -> igual, mas com inverter=T
+ 
+ 
+------------------------------------------------------------
+5.8 - IDEIAS PARA QUEM FOR ADAPTAR ESTE CODIGO
+------------------------------------------------------------
+ 
+  - Para dar suporte a mais tipos de entidade (ex: ELIPSE, SPLINE),
+    adicione um novo bloco "((= etype "TIPO") ...)" dentro do
+    (cond ...) da funcao pique-info (secao 5.5), calculando o
+    angulo tangente apropriado para aquele tipo.
+ 
+  - Para mudar o formato do simbolo (por exemplo, adicionar uma
+    linha extra, um circulo no meio, etc.), edite o PASSO 7 da
+    pique-executar (secao 5.6) -- e so questao de calcular pontos
+    adicionais (do mesmo jeito que pEsq/pDir/pApice foram
+    calculados) e desenhar mais entidades com (command "_.LINE"...)
+    ou outros comandos do DraftSight.
+ 
+  - Para criar um comando totalmente novo reaproveitando a logica
+    de deteccao de tangente, chame pique-info diretamente -- ela
+    e generica e nao depende de nada especifico do "V" do piquete.
+ 
+============================================================
+FIM DA EXPLICACAO
+============================================================
+
+
+

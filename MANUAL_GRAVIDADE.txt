@@ -1,0 +1,400 @@
+============================================================
+MANUAL DE INSTALACAO - COMANDOS GRAVIDADE (DraftSight)
+============================================================
+
+Criado por RAFAEL_K
+
+Este manual explica como configurar, em um computador novo, os
+comandos personalizados GRAVSET, GRAVIDADE e GRAVBOX no DraftSight.
+
+O GRAVIDADE e uma ferramenta de posicionamento manual de pecas
+("nesting" manual) para chapas de corte. Ele NAO usa bloco nenhum
+nem depende de ActiveX/COM (a licenca Professional nao tem esse
+modulo). So existe UM arquivo necessario:
+
+      GRAVIDADE.LSP
+
+
+------------------------------------------------------------
+1. ARQUIVO NECESSARIO
+------------------------------------------------------------
+
+  GRAVIDADE.LSP
+     - Contem todo o codigo dos comandos GRAVSET, GRAVIDADE e
+       GRAVBOX.
+     - Nao depende de nenhum outro arquivo nem de ActiveX/COM.
+
+
+------------------------------------------------------------
+2. PASSO A PASSO NO COMPUTADOR
+------------------------------------------------------------
+
+PASSO 1 - Criar (ou reaproveitar) a pasta de suporte
+  Se voce ja tem a pasta do PIQUE, pode usar a mesma:
+      C:\Users\<seu usuario>\Documents\DraftSight_Lisp\
+
+PASSO 2 - Copiar o arquivo
+  Copie para essa pasta:
+      - GRAVIDADE.LSP
+
+PASSO 3 - Carregar manualmente (teste)
+  Na linha de comando do DraftSight, digite (ajustando o caminho
+  para o seu usuario):
+      (load "C:/Users/<seu usuario>/Documents/DraftSight_Lisp/GRAVIDADE.LSP")
+
+  Deve aparecer a mensagem:
+      GRAVIDADE.LSP (v10) carregado -- GRAVBOX agora e folga
+      extra, nao substitui a forma.
+      Comandos: GRAVSET, GRAVIDADE (W/A/S/D, B = caixas), GRAVBOX
+      (folga extra)
+
+PASSO 4 - Carregar automaticamente toda vez que o DraftSight abrir
+  Coloque o STARTUP.LSP nessa mesma pasta e adicione a pasta em
+  OPTIONS > Localizacao de Arquivos > Sistema > Caminho de Pesquisa
+  de Arquivos de Suporte. O STARTUP.LSP carrega sozinho todos os
+  .lsp da pasta (GRAVIDADE, PIQUE, MEDLIN, UNIRPONTAS...) toda vez
+  que o DraftSight abrir, sem precisar do (load ...) manual e sem
+  precisar editar nada dentro dele.
+
+
+------------------------------------------------------------
+3. COMANDOS DISPONIVEIS
+------------------------------------------------------------
+
+  GRAVSET
+      - Comando de CONFIGURACAO, roda uma vez no inicio (ou toda
+        vez que voce mudar as pecas na tela).
+      - Pede pra selecionar TODAS as pecas que servem de
+        obstaculo.
+      - Pergunta o espacamento minimo entre pecas (gap), em mm.
+      - Pergunta a sensibilidade da busca fina (mm) -- quanto
+        menor, mais preciso e mais lento. Padrao: 0.1mm.
+      - Pergunta (opcional) se existe um retangulo no desenho
+        representando os limites da chapa, pra usar como parede.
+      - Zera qualquer folga extra configurada antes no GRAVBOX.
+
+  GRAVIDADE
+      - Comando principal, fica em loop continuo (aperte ESC
+        para sair).
+      - Selecione uma peca (ou clique nela antes de rodar o
+        comando) e aperte uma tecla, SEM precisar de Enter:
+            W = Cima      S = Baixo
+            A = Esquerda  D = Direita
+            B = mostra/esconde as caixas de colisao
+      - A peca desliza na direcao escolhida ate encostar na peca
+        mais proxima (usando o CONTORNO REAL dela, nao so um
+        retangulo), respeitando o gap. Se nao encontrar nenhum
+        obstaculo, move 10000mm nessa direcao.
+      - Se voce tinha acabado de editar caixas no GRAVBOX, o
+        GRAVIDADE salva essas edicoes automaticamente antes de
+        comecar.
+
+  GRAVBOX
+      - Liga/desliga a visualizacao das caixas de colisao pra
+        voce CONFERIR ou AJUSTAR manualmente.
+      - Ao ligar: desenha um retangulo tracejado cinza em volta
+        de cada peca (o contorno real + qualquer folga ja
+        configurada). Voce pode clicar e arrastar os grips dele.
+      - Ao desligar (rode o comando de novo): SALVA a diferenca
+        entre o que voce arrastou e o contorno real como uma
+        FOLGA EXTRA por lado (esquerda/direita/baixo/cima) --
+        isso NAO substitui o calculo da forma real, so soma uma
+        distancia extra de seguranca naquele lado especifico.
+
+
+------------------------------------------------------------
+4. RESOLUCAO DE PROBLEMAS COMUNS
+------------------------------------------------------------
+
+- "Comando nao reconhecido GRAVSET" (ou GRAVIDADE/GRAVBOX):
+     O GRAVIDADE.LSP nao foi carregado. Rode o Passo 3 manualmente.
+
+- "Nao e possivel carregar o arquivo" ao usar (load ...):
+     O arquivo precisa estar em texto ASCII puro, sem acentos, com
+     quebra de linha estilo Windows (CRLF). Se voce editar o
+     arquivo manualmente, salve como ANSI (nao UTF-8) no Bloco de
+     Notas, e confira que a extensao e mesmo .LSP (nao .LSP.txt --
+     ative "Mostrar extensoes de arquivo" no Windows pra conferir).
+
+- "Erro: falha ao carregar a extensao COM":
+     Algum trecho do codigo tentou usar ActiveX/COM
+     (vl-load-com, vla-*, vlax-*), que a licenca Professional nao
+     tem. O GRAVIDADE.LSP atual nao usa nada disso -- se aparecer
+     esse erro, avise que algo foi adicionado por engano.
+
+- O DraftSight FECHA/TRAVA ao usar GRAVIDADE:
+     Ja aconteceu uma vez por causa de um comando de carregar
+     arquivo de linetype (._-LINETYPE _Load ...) que ficava
+     esperando uma resposta que nunca chegava. O script atual NAO
+     executa mais nenhum comando desse tipo. Se travar de novo,
+     rode GRAVSET respondendo "Nao" pra caixa de colisao (se
+     perguntado) pra isolar se o problema esta no desenho das
+     caixas ou no nucleo do calculo.
+
+- A camera fica pulando de posicao toda hora:
+     So deve acontecer se alguma peca for de um tipo nao suportado
+     pelo calculo exato (bloco/INSERT complexo, spline) -- nesse
+     caso o script avisa na tela e usa o metodo antigo de ZOOM,
+     que mexe a camera brevemente. Pecas do tipo LINE, LWPOLYLINE,
+     POLYLINE, CIRCLE e ARC nao tem esse problema.
+
+- As pecas se cruzam (principalmente em partes arredondadas/bulge):
+     Corrigido a partir da v9 -- o calculo agora entende arcos
+     dentro de LWPOLYLINE (bulge), nao trata mais como reta.
+
+- "Nenhum obstaculo encontrado nessa direcao" mesmo tendo pecas
+  no caminho, ou a peca "trava" perto de outra sem se aproximar:
+     Acontece quando as duas pecas JA ESTAO sobrepostas (bbox
+     contra bbox) antes de comecar o movimento -- o algoritmo so
+     reconhece obstaculos que estao A FRENTE no caminho. Separe as
+     pecas manualmente uma vez (arraste, ou mova na direcao
+     oposta) antes de continuar.
+
+- Clico numa caixa de colisao durante o GRAVIDADE e nada acontece
+  (cursor vira mao mas nao move):
+     As caixas nao sao mais selecionaveis dentro do GRAVIDADE (e
+     proposital, pra nao confundir com a selecao de pecas). Use o
+     comando GRAVBOX pra editar as caixas -- ele nao trava o
+     teclado/mouse, entao os grips funcionam normalmente.
+
+
+============================================================
+FIM DO MANUAL
+============================================================
+
+
+
+
+============================================================
+INICIO DO CODIGO BEM ESPLICADO
+============================================================
+
+O GRAVIDADE.LSP tem 956 linhas, entao em vez de explicar linha por
+linha (como no manual do PIQUE), vou explicar por GRUPOS de
+funcoes, na ordem em que aparecem no arquivo. Cada grupo tem uma
+responsabilidade especifica.
+
+
+------------------------------------------------------------
+5.1 - Grupo BULGE (linhas 60-137)
+------------------------------------------------------------
+
+Responsavel por entender ARCOS dentro de uma LWPOLYLINE (o
+"bulge" -- aquele valor do DXF que faz um segmento da polilinha
+virar uma curva em vez de reta).
+
+  GRAV-BULGE-MID (linha 60): dado um segmento P1->P2 com um valor
+     de bulge, calcula o PONTO DO MEIO do arco real (nao da reta).
+     Usa a formula da "sagita" (distancia do meio da corda ate o
+     arco): sagita = bulge * comprimento_da_corda / 2. O lado pra
+     onde o arco se curva e definido girando o vetor da corda 90
+     graus (o sentido exato desse giro foi um dos bugs corrigidos
+     durante o desenvolvimento -- estava espelhado).
+
+  GRAV-HALF-BULGE (linha 77): formula exata pra calcular o "meio
+     bulge" quando um arco e dividido em dois pedacos iguais.
+     Usada pra subdivisao recursiva.
+
+  GRAV-BULGE-PTS (linha 81): pega um segmento com bulge e o
+     SUBDIVIDE recursivamente (3 niveis = 8 pontos), usando as
+     duas funcoes acima, ate ter uma aproximacao bem fiel da curva
+     -- sem precisar calcular centro/raio do arco (o que evitaria
+     ambiguidade de lado em arcos maiores que 180 graus).
+
+  GRAV-LWPOLY-VERTS (linha 94): le os dados brutos (entget) de uma
+     LWPOLYLINE e extrai cada vertice junto com o bulge dele.
+
+  GRAV-LWPOLY-EXPAND (linha 113): junta tudo -- percorre todos os
+     segmentos da polilinha (fechando o ultimo com o primeiro se
+     ela for fechada) e devolve a lista COMPLETA de pontos, com os
+     arcos ja expandidos em pontos retos. Essa funcao e usada tanto
+     pro calculo do bounding box quanto pro teste de colisao real.
+
+
+------------------------------------------------------------
+5.2 - Grupo BOUNDING BOX (linhas 139-274)
+------------------------------------------------------------
+
+Calcula o retangulo envolvente de qualquer entidade -- usado para
+descarte rapido (antes de fazer o calculo caro de forma real).
+
+  GRAV-BBOX-PTS (linha 139): bounding box simples de uma lista de
+     pontos (min/max de X e Y).
+
+  GRAV-ANG-NORM / GRAV-ANG-IN-RANGE (linhas 151-166): normalizam e
+     testam angulos, usados pelo bbox de ARC.
+
+  GRAV-ARC-BBOX (linha 168): bbox de um ARC puro (nao dentro de
+     polilinha) -- testa os 4 pontos cardinais (0/90/180/270 graus)
+     que caem dentro do arco, mais os pontos inicial/final.
+
+  GRAV-BBOX-GEOM (linha 179): a funcao central -- olha o tipo da
+     entidade (LINE, CIRCLE, ARC, LWPOLYLINE, POLYLINE) e devolve o
+     bbox exato de cada um. Pra LWPOLYLINE, usa GRAV-LWPOLY-EXPAND
+     (com bulge). Devolve nil se o tipo nao for suportado.
+
+  GRAV-BBOX-ZOOM (linha 217): FALLBACK para tipos nao suportados
+     (bloco/INSERT, spline). Como a licenca nao tem ActiveX/COM,
+     usa um truque: da um ZOOM Object na entidade e le o tamanho da
+     tela resultante (VIEWCTR/VIEWSIZE) pra estimar o bbox. Menos
+     preciso, e mexe a camera.
+
+  GRAV-BBOX (linha 232): a funcao que todo o resto do codigo chama.
+     Tenta GRAV-BBOX-GEOM primeiro; se vier nil, cai pro
+     GRAV-BBOX-ZOOM.
+
+  GRAV-PIECE-PAD / GRAV-PADDED-BBOX (linhas 245-259): leem a folga
+     extra configurada no GRAVBOX pra uma peca (0 se nunca foi
+     ajustada) e devolvem o bbox real "inflado" por essa folga --
+     usado SO pra desenhar a caixa visual, nunca pro calculo de
+     colisao em si.
+
+  GRAV-RESTORE-VIEW (linha 261): desfaz os ZOOMs feitos pelo
+     GRAV-BBOX-ZOOM (usando ZOOM Previous, contando quantos zooms
+     foram feitos), devolvendo a tela pra onde estava.
+
+
+------------------------------------------------------------
+5.3 - Grupo FORMA REAL / COLISAO (linhas 276-449)
+------------------------------------------------------------
+
+Adaptado do script VERIFICA_COLISAO.LSP -- testa se duas formas
+IRREGULARES realmente se tocam, olhando o contorno de verdade (nao
+so o retangulo).
+
+  GRAV-RECT-CORNERS (linha 276): transforma um bbox (2 pontos) nos
+     4 cantos de um retangulo -- usado como aproximacao pra
+     entidades sem suporte a forma real (LINE, ARC solto, bloco).
+
+  GRAV-ENT-POLY-PTS (linha 283): devolve o CONTORNO REAL de uma
+     entidade como lista de pontos -- LWPOLYLINE usa
+     GRAV-LWPOLY-EXPAND (bulge incluso), CIRCLE e aproximado por um
+     poligono de 36 lados, e qualquer outro tipo cai nos 4 cantos
+     do bbox.
+
+  GRAV-TRANSLATE-PTS (linha 318): desloca uma lista de pontos por
+     (dx,dy) -- usado pra "testar" a peca em posicoes candidatas
+     sem realmente move-la ainda.
+
+  GRAV-POLY-EDGES (linha 326): transforma uma lista de pontos nas
+     ARESTAS do poligono (pares de pontos consecutivos, fechando do
+     ultimo ao primeiro).
+
+  GRAV-EDGES-CROSS-P (linha 339): testa se alguma aresta da forma 1
+     cruza alguma aresta da forma 2, usando a funcao nativa INTERS
+     do AutoLISP (calculo de intersecao entre dois segmentos).
+
+  GRAV-PT-IN-POLY-P (linha 356): teste de "ponto dentro do
+     poligono" por RAY CASTING -- cobre o caso de uma forma estar
+     TOTALMENTE dentro da outra, sem cruzar nenhuma aresta (que o
+     teste anterior sozinho nao pegaria).
+
+  GRAV-POLY-TOUCH-PTS (linha 376): junta os dois testes acima --
+     primeiro tenta cruzamento de arestas, se nao achar, testa se
+     uma esta dentro da outra.
+
+  GRAV-CREEP-CONTACT (linha 391): a funcao mais importante desse
+     grupo. Recebe o ponto de contato encontrado pelo bbox (rapido
+     mas impreciso) e avanca de 0.1mm em 0.1mm (ou o valor de
+     sensibilidade escolhido no GRAVSET) TESTANDO a forma real a
+     cada passo, ate achar o toque de verdade. Devolve a posicao do
+     contato E qual obstaculo foi atingido (nem sempre e o mais
+     proximo por bbox -- por isso testa contra TODOS os obstaculos
+     no "corredor", nao so o mais perto). Se nao achar em ate
+     200mm de busca, devolve nil (e quem chamou usa o bbox comum
+     como reserva).
+
+
+------------------------------------------------------------
+5.4 - Grupo SELECAO / TECLAS / VISUAL (linhas 450-628)
+------------------------------------------------------------
+
+  GRAV-IS-BOX-ENT / GRAV-PICK-ENT (linhas 450-477): impedem que
+     voce selecione sem querer uma caixa de colisao (em vez de uma
+     peca) na hora de escolher o que mover dentro do GRAVIDADE.
+
+  GRAV-READ-DIR (linha 479): le UMA tecla direto do teclado, SEM
+     precisar de Enter -- usa a funcao GRREAD do AutoLISP, que le
+     eventos de teclado/mouse em baixo nivel (diferente do
+     GETKWORD, que sempre espera Enter). Traduz W/A/S/D pra
+     direcao, e B pra ligar/desligar as caixas sem sair do loop.
+
+  GRAV-SET-COLOR / GRAV-SET-LINETYPE / GRAV-SET-LTSCALE (linhas
+     506-546): mudam cor, tipo de linha e escala de uma entidade
+     direto pelos dados DXF (entmod), sem precisar de ActiveX/COM.
+
+  GRAV-DASHED-OR-CONTINUOUS (linha 548): verifica (sem executar
+     NENHUM comando) se o linetype tracejado ja existe no desenho.
+     Importante: aqui MORAVA um bug que travava o DraftSight -- a
+     versao anterior tentava CARREGAR o arquivo de linetype com um
+     comando, que as vezes ficava esperando resposta pra sempre.
+     A versao atual so verifica, nunca carrega sozinha.
+
+  GRAV-SEND-BACK (linha 552): manda a caixa desenhada pra TRAS das
+     linhas da peca (comando DRAWORDER), pra incomodar menos
+     visualmente.
+
+  GRAV-DRAW-BBOX (linha 558): desenha o retangulo tracejado cinza
+     de uma caixa de colisao.
+
+  GRAV-CLEAR-BBOXES / GRAV-REFRESH-BBOXES (linhas 573-595): apagam
+     e redesenham todas as caixas visiveis na tela.
+
+  GRAV-APPLY-BOX-OVERRIDES (linha 597): quando voce termina de
+     editar no GRAVBOX, essa funcao compara a caixa que voce
+     arrastou com o contorno real da peca e calcula a diferenca
+     PARA CADA LADO (esquerda/direita/baixo/cima) -- essa diferenca
+     vira a "folga extra" salva em *GRAV-OVERRIDES*.
+
+
+------------------------------------------------------------
+5.5 - COMANDOS (linhas 630-956)
+------------------------------------------------------------
+
+  c:GRAVSET (linha 630): pede a selecao de obstaculos, o gap, a
+     sensibilidade, e (opcional) o retangulo da chapa. Zera as
+     folgas extras antigas.
+
+  GRAV-MOVE-ONE (linha 696): o "motor" do movimento -- recebe a
+     peca, a direcao e o gap, e faz TUDO: escaneia obstaculos por
+     bbox (rapido), decide se a chapa ou uma peca e o obstaculo
+     mais proximo, se for peca chama GRAV-CREEP-CONTACT pra achar o
+     toque real, soma a folga extra de ambas as pecas envolvidas
+     (GRAV-PIECE-PAD), e por fim move a entidade de verdade com o
+     comando MOVE do DraftSight.
+
+  c:GRAVIDADE (linha 861): o loop principal. Salva folgas pendentes
+     do GRAVBOX automaticamente se necessario, configura um
+     tratamento de erro especial (pra garantir limpeza mesmo se
+     voce apertar ESC no meio), mostra a chapa em amarelo, e fica
+     em loop chamando GRAV-PICK-ENT + GRAV-READ-DIR + GRAV-MOVE-ONE
+     ate voce sair.
+
+  c:GRAVBOX (linha 924): alterna entre mostrar as caixas (pra
+     editar com grips, sem travar teclado/mouse) e escondê-las
+     (salvando a folga extra calculada por GRAV-APPLY-BOX-OVERRIDES
+     antes de apagar).
+
+
+------------------------------------------------------------
+5.6 - IDEIAS PARA QUEM FOR ADAPTAR ESTE CODIGO
+------------------------------------------------------------
+
+  - Para dar suporte a forma real em BLOCOS (INSERT), seria preciso
+    andar pelas entidades do bloco (via tblsearch "BLOCK" e
+    entnext) e transformar cada uma pela insercao/escala/rotacao do
+    bloco -- hoje bloco cai direto no fallback de bbox por zoom.
+
+  - Para dar suporte a bulge em POLYLINE antiga (nao so LWPOLYLINE),
+    seria so aplicar a mesma logica de GRAV-LWPOLY-EXPAND, trocando
+    a fonte dos vertices (percorrer VERTEX via entnext em vez de
+    ler o group code 10 direto da entidade).
+
+  - Para adicionar deteccao de rotacao (girar a peca em vez de so
+    mover), seria um comando novo que usa GRAV-ENT-POLY-PTS,
+    rotaciona os pontos, e testa colisao do mesmo jeito que o
+    GRAV-CREEP-CONTACT ja faz pra translacao.
+
+============================================================
+FIM DA EXPLICACAO
+============================================================

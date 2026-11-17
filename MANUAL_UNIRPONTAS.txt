@@ -1,0 +1,620 @@
+============================================================
+MANUAL DE INSTALACAO - UNIRPONTAS (Uniao de Pontas Proximas)
+DraftSight
+============================================================
+
+Criado por: RAFAEL_K e CLAUDIO*
+
+Este manual explica como configurar, em um computador novo, os
+comandos personalizados UNIRPONTAS, UNIRVARIASPONTAS e
+MOSTRARABERTOS no DraftSight.
+
+O UNIRPONTAS serve para fechar pequenas folgas entre objetos LINE,
+ARC e/ou LWPOLYLINE que deveriam estar encostados mas ficaram com
+uma pontinha solta (por exemplo, apos um desenho importado de outro
+programa, ou um desenho feito "a mao livre"). So existe UM arquivo
+necessario:
+
+      UNIRPONTAS.LSP
+
+
+------------------------------------------------------------
+1. ARQUIVO NECESSARIO
+------------------------------------------------------------
+
+  UNIRPONTAS.LSP
+     - Contem todo o codigo dos comandos UNIRPONTAS,
+       UNIRVARIASPONTAS e MOSTRARABERTOS.
+     - Nao depende de nenhum outro arquivo.
+     - Nao usa vl-load-com nem vlax-curve-*/vla-* (funcoes que
+       dependem de ActiveX/COM) - por isso funciona mesmo em
+       instalacoes do DraftSight onde a extensao COM falha ao
+       carregar.
+
+
+------------------------------------------------------------
+2. PASSO A PASSO NO COMPUTADOR
+------------------------------------------------------------
+
+PASSO 1 - Criar a pasta de suporte
+  Crie uma pasta fixa para guardar o arquivo, por exemplo:
+      C:\Users\<seu usuario>\Documents\DraftSight_Lisp\
+
+PASSO 2 - Copiar o arquivo
+  Copie para essa pasta:
+      - UNIRPONTAS.LSP
+
+PASSO 3 - Abrir o DraftSight e configurar o caminho de busca
+  1. Abra o DraftSight.
+  2. Digite o comando: OPTIONS  (ou va em Ferramentas > Opcoes)
+  3. Va em: Localizacao de Arquivos > Sistema >
+            Caminho de Pesquisa de Arquivos de Suporte
+  4. Clique em "Novo..." e selecione a pasta criada no Passo 1
+     (ex: C:\Users\<seu usuario>\Documents\DraftSight_Lisp\)
+     (se voce ja tiver essa pasta configurada por causa de outro
+     LSP, como o MEDLIN.LSP, pode pular direto para o Passo 4)
+  5. Clique em OK para salvar e feche a janela de Opcoes.
+
+PASSO 4 - Fechar e abrir o DraftSight novamente
+  Feche o programa e abra de novo, para garantir que o caminho novo
+  seja reconhecido.
+
+PASSO 5 - Testar se o UNIRPONTAS.LSP esta sendo encontrado ***(opcional)***
+  Na linha de comando, digite:
+      (findfile "UNIRPONTAS.LSP")
+  Se retornar o caminho do arquivo, esta tudo certo.
+  Se retornar "nil", revise o Passo 3 (o caminho nao foi adicionado
+  corretamente).
+
+PASSO 6 - Carregar o arquivo manualmente (primeira vez / teste) ***(opcional)***
+  Digite (ajustando o caminho para o seu usuario):
+      (load "C:\\Users\\<seu usuario>\\Documents\\DraftSight_Lisp\\UNIRPONTAS.LSP")
+  (repare nas barras invertidas duplas \\ )
+
+  Deve aparecer a mensagem:
+      UNIRPONTAS.LSP (v2) - Encontrado Comandos
+      Finalidade..: Unir pontas de LINE, ARC e LWPOLYLINE que
+      estejam proximas dentro de uma tolerancia, fechando pequenas
+      folgas entre objetos quase encostados; e localizar
+      visualmente pontas que ficaram sem par.
+      Comandos....: UNIRPONTAS, UNIRVARIASPONTAS, MOSTRARABERTOS
+      Autoria.....: Rafael.K e Claudio*
+
+  Esse carregamento manual vale so ate fechar o DraftSight. Para
+  carregar sozinho (automaticamente) toda vez que o programa abrir,
+  coloque tambem o STARTUP.LSP nessa mesma pasta: ele carrega todos
+  os .lsp da pasta, sem precisar rodar o (load ...) de novo.
+
+
+------------------------------------------------------------
+3. COMANDOS DISPONIVEIS
+------------------------------------------------------------
+
+  UNIRPONTAS
+      - Modo INTERATIVO: fica ativo ate voce apertar ESC.
+      - Pergunta a tolerancia (distancia maxima, em unidades de
+        desenho, entre duas pontas para elas serem consideradas
+        "a mesma") - padrao *UP-TOL-PADRAO* = 0.5 se so der ENTER.
+      - Selecione os objetos (LINE, ARC, LWPOLYLINE) que voce quer
+        que participem da uniao.
+      - Um QUADRADO do tamanho da tolerancia acompanha o cursor
+        do mouse, mostrando exatamente a area de captura antes de
+        clicar.
+      - Clique perto de DUAS OU MAIS pontas ao mesmo tempo (todas
+        dentro do quadrado) para uni-las de uma vez.
+      - Se so houver 0 ou 1 ponta dentro do quadrado no clique, o
+        comando avisa "Nenhum par de pontas encontrado nessa area"
+        e continua no modo interativo - voce pode tentar de novo.
+      - Depois de cada uniao, a lista de pontas e recalculada
+        automaticamente (as entidades editadas ja aparecem na nova
+        posicao para o proximo clique).
+      - ESC encerra o modo interativo a qualquer momento.
+
+  UNIRVARIASPONTAS
+      - Operacao UNICA (sem interacao de mouse - roda e termina).
+      - Pergunta a tolerancia (mesmo padrao do UNIRPONTAS).
+      - Pede para selecionar a area/objetos de uma vez.
+      - Une AUTOMATICAMENTE todos os grupos de pontas proximas
+        encontrados dentro da selecao, sem precisar clicar em cada
+        um.
+      - Agrupamento em CADEIA: se a ponta A esta perto de B e B
+        esta perto de C, as tres entram no MESMO grupo e sao unidas
+        juntas - mesmo que A e C estejam longe uma da outra.
+      - Ao final, informa quantos grupos e quantas pontas ao todo
+        foram unidos.
+      - Use este comando quando ja souber que quer unir tudo que
+        estiver dentro da tolerancia, sem precisar clicar ponto a
+        ponto (mais rapido para desenhos com muitas folgas
+        espalhadas).
+
+  MOSTRARABERTOS
+      - Modo de DIAGNOSTICO (fica ativo ate ESC), nao une nada.
+      - Seleciona os objetos e desenha um CIRCULO VERMELHO em cada
+        ponta que NAO esta realmente coincidente com outra.
+      - IMPORTANTE: este comando NAO usa a tolerancia digitada nos
+        outros dois comandos. Aqui o que importa e coincidencia
+        REAL (uniao de verdade, ponta encostada em ponta, dentro de
+        uma margem minima so de erro de ponto flutuante -
+        *UP-EPS-COINCIDENCIA*). Serve para você enxergar, antes de
+        rodar o UNIRPONTAS/UNIRVARIASPONTAS, onde estao as folgas
+        que ainda precisam ser fechadas.
+      - Os circulos tem diametro FIXO (*UP-DIAMETRO-ABERTO*),
+        sempre do mesmo tamanho, mesmo que se sobreponham com outro
+        circulo proximo.
+      - Se nao houver nenhuma ponta aberta, o comando so informa
+        "0 ponta(s) NAO unida(s) encontrada(s)" e termina sozinho
+        (sem entrar no modo de espera do ESC).
+      - Se houver pontas abertas, pressione ESC para fechar o modo
+        e remover os circulos do desenho (eles sao so uma marcacao
+        temporaria de diagnostico, nunca ficam salvos no desenho).
+
+  Regra de UNIAO (comum aos tres comandos, ao mover as pontas):
+      - Se TODAS as pontas do grupo forem de LINE/LWPOLYLINE:
+        movidas para a posicao MEDIA entre elas.
+      - Se alguma ponta for de ARC: as outras sao movidas
+        EXATAMENTE para a ponta desse ARC (o arco fica PARADO -
+        mover a ponta de um arco livremente mudaria seu raio/
+        centro; e a linha/polilinha que se ajusta a ele).
+
+  Suporte automatico de entidade, nos tres comandos:
+      - LINE                        : pontas = ponto inicial (10)
+                                       e final (11)
+      - ARC                         : pontas = ponto calculado a
+                                       partir do angulo inicial (50)
+                                       e final (51)
+      - LWPOLYLINE ABERTA           : pontas = primeiro e ultimo
+                                       vertice
+      - LWPOLYLINE FECHADA          : nao tem pontas livres (nao
+                                       entra na lista)
+      - Circulo (CIRCLE), ELIPSE, SPLINE, POLYLINE antiga (2D
+        pesada): nao suportado
+
+
+------------------------------------------------------------
+4. VARIAVEIS DE CONFIGURACAO (topo do arquivo)
+------------------------------------------------------------
+
+  *UP-VERSION*
+      Texto so informativo com a versao do arquivo (v2), usado na
+      mensagem de carregamento.
+
+  *UP-TOL-PADRAO*
+      Tolerancia (em unidades de desenho) usada nos comandos
+      UNIRPONTAS e UNIRVARIASPONTAS quando o usuario aperta ENTER
+      sem digitar um valor. Padrao: 0.5
+
+  *UP-EPS-COINCIDENCIA*
+      Margem minima (so erro de ponto flutuante, NAO uma
+      tolerancia "de projeto") usada exclusivamente pelo
+      MOSTRARABERTOS para decidir se duas pontas estao "de fato"
+      unidas. Independe da tolerancia digitada pelo usuario nos
+      outros dois comandos. Padrao: 1e-4
+
+  *UP-DIAMETRO-ABERTO*
+      Diametro FIXO (em unidades de desenho) do circulo vermelho
+      desenhado pelo MOSTRARABERTOS em cada ponta aberta. Padrao:
+      5.0
+      Ajuste esse numero se os circulos ficarem grandes/pequenos
+      demais para a escala das suas pecas.
+
+
+------------------------------------------------------------
+5. RESOLUCAO DE PROBLEMAS COMUNS
+------------------------------------------------------------
+
+- "Comando nao reconhecido UNIRPONTAS" (ou UNIRVARIASPONTAS /
+  MOSTRARABERTOS):
+     O UNIRPONTAS.LSP nao foi carregado. Rode o Passo 6 manualmente
+     e revise o caminho de pesquisa (Passo 3).
+
+- "Nao e possivel carregar o arquivo" ao usar (load ...):
+     Verifique se o arquivo foi salvo como texto puro (.LSP), e nao
+     como .LSP.txt. Ative "Mostrar extensoes de arquivo" no Windows
+     para conferir. Se estiver usando o Bloco de Notas, salve com
+     codificacao ANSI (nao UTF-8 com BOM).
+
+- "Erro: falha ao carregar a extensao COM":
+     Nao deve mais acontecer - a versao atual do UNIRPONTAS.LSP nao
+     usa nenhuma funcao vlax-/vla-/vl-load-com. Se aparecer,
+     confirme que esta usando o arquivo mais recente (v2).
+
+- O quadrado do cursor (UNIRPONTAS) deixa um "rastro" na tela:
+     Nao deve mais ocorrer - a v2 desenha o quadrado como uma
+     entidade real (LWPOLYLINE fechada, via entmakex), apagada e
+     recriada a cada movimento do mouse, em vez de um desenho de
+     pixel (grdraw). Se ainda assim aparecer rastro, force um
+     REDRAW/REGEN do DraftSight.
+
+- Cliquei perto de duas pontas e nada aconteceu:
+     Confirme que as DUAS pontas estao dentro do quadrado no
+     momento do clique (a tolerancia e aplicada em X e em Y a
+     partir do ponto clicado, nao a partir do centro exato de cada
+     ponta). Aumente a tolerancia se necessario, ou use o
+     MOSTRARABERTOS antes para confirmar a distancia real entre as
+     pontas.
+
+- O UNIRVARIASPONTAS uniu pontas que eu nao queria juntar:
+     O agrupamento e feito EM CADEIA (secao 3): se A esta perto de
+     B e B perto de C, os tres sao unidos juntos, mesmo que A e C
+     estejam fisicamente longe. Se isso gerar uniao indesejada,
+     reduza a tolerancia ou use o UNIRPONTAS (modo interativo,
+     clique a clique) para ter controle fino sobre quais pontas
+     entram em cada grupo.
+
+- O MOSTRARABERTOS mostra uma ponta como "aberta" mesmo apos eu
+  rodar o UNIRPONTAS:
+     O MOSTRARABERTOS usa uma margem fixa muito pequena
+     (*UP-EPS-COINCIDENCIA*, secao 4), diferente da tolerancia que
+     voce digitou no UNIRPONTAS/UNIRVARIASPONTAS. Se a tolerancia
+     usada na uniao foi maior que essa margem, mas o ponto final
+     nao caiu EXATAMENTE sobre o outro (por algum motivo de
+     arredondamento), o MOSTRARABERTOS ainda pode acusar abertura.
+     Rode o MOSTRARABERTOS de novo apos a uniao para confirmar.
+
+- Movi a ponta de um ARC sem querer e o raio/formato mudou:
+     Isso nao deve acontecer com estes comandos - por regra (secao
+     3), quando ha um ARC no grupo, e sempre o ARC que fica parado
+     e as outras pontas (LINE/LWPOLYLINE) e que se movem ate ele.
+     Se voce editou o ARC manualmente por outro meio depois da
+     uniao, isso e independente destes comandos.
+
+- Os circulos vermelhos do MOSTRARABERTOS ficaram no desenho depois
+  de fechar o DraftSight sem dar ESC:
+     Rode o MOSTRARABERTOS de novo - ele limpa automaticamente
+     qualquer sobra de uma execucao anterior interrompida (camada
+     MOSTRARABERTOS_MARCA) antes de comecar a nova varredura, e
+     depois voce pode dar ESC normalmente para remove-los de vez.
+
+
+============================================================
+FIM DO MANUAL
+============================================================
+
+
+
+
+============================================================
+INICIO DO CODIGO BEM EXPLICADO
+============================================================
+
+O codigo completo esta no arquivo UNIRPONTAS.lsp (nao reproduzido
+aqui para nao duplicar o arquivo - use-o como referencia junto com
+esta explicacao).
+
+
+------------------------------------------------------------
+6. EXPLICACAO DO CODIGO, PARTE POR PARTE (PARA QUEM FOR EDITAR)
+------------------------------------------------------------
+
+Este capitulo explica o que cada trecho do UNIRPONTAS.lsp faz. A
+ideia e servir de referencia para quem precisar entender, ajustar
+ou usar este arquivo como exemplo para criar outros comandos
+parecidos.
+
+
+------------------------------------------------------------
+6.1 - VARIAVEIS GLOBAIS DE CONFIGURACAO (topo do arquivo)
+------------------------------------------------------------
+
+    *UP-VERSION*, *UP-TOL-PADRAO*, *UP-EPS-COINCIDENCIA*,
+    *UP-DIAMETRO-ABERTO*
+
+Ja explicadas em detalhe na secao 4 deste manual. Ficam todas juntas
+no topo de proposito, para nao precisar caçar valores espalhados
+pelo meio do codigo quando for ajustar alguma coisa.
+
+  - Nomes em MAIUSCULO com asterisco (*NOME*) sao so uma convencao
+    de AutoLISP para indicar "isto e uma constante/configuracao
+    global", nao um requisito da linguagem.
+
+
+------------------------------------------------------------
+6.2 - LEITURA DE PONTAS POR TIPO DE ENTIDADE (prefixo UP:)
+------------------------------------------------------------
+
+Todas as funcoes auxiliares comecam com "UP:" (Unir Pontas) para
+nao conflitar com nomes de outras rotinas que voce ja tenha
+carregadas no DraftSight (por exemplo, as funcoes "ML:" do
+MEDLIN.lsp).
+
+  UP:arc-endpoint (edata isStart)
+      Calcula o ponto real (X Y) de uma extremidade de ARC, a
+      partir do centro (codigo DXF 10), raio (codigo 40) e angulo
+      inicial (codigo 50) ou final (codigo 51) - usando
+      centro + raio*(cos ang, sen ang). Diferente de LINE, o DXF de
+      um ARC nao guarda os pontos de ponta prontos, so o centro e
+      os angulos - por isso essa conta e necessaria.
+
+  UP:get-endpoints (ename)
+      Devolve as "pontas livres" de UMA entidade, no formato
+      (list (list ponto codigoOuTag) (list ponto codigoOuTag)):
+        LINE       -> pontos dos codigos DXF 10 e 11
+        ARC        -> pontos calculados via UP:arc-endpoint, com
+                       as tags de texto "SA" (start angle) e "EA"
+                       (end angle) no lugar de um codigo numerico
+        LWPOLYLINE -> primeiro e ultimo vertice (codigo 10),
+                       com as tags "FIRSTVTX"/"LASTVTX" - MAS
+                       devolve nil se a polilinha estiver FECHADA
+                       (bit 1 do codigo 70 ligado), porque uma
+                       polilinha fechada nao tem ponta solta.
+      O "codigoOuTag" guardado aqui e o que permite, mais tarde,
+      saber COMO editar aquela ponta especifica de volta na
+      entidade (ver UP:update-point, secao 6.3).
+
+  UP:build-pool (ss)
+      Percorre todo o conjunto de selecao "ss" e, para cada
+      entidade, chama UP:get-endpoints e despeja todas as pontas
+      encontradas numa unica lista "pool" (achatada), onde cada
+      item vira (list ponto entName whichCode entType) - ja
+      guardando junto o nome da entidade dona e o tipo dela (usado
+      depois pela regra de uniao da secao 3, para saber se ha ARC
+      no grupo). Esse "pool" e a base de dados usada por TODOS os
+      tres comandos (UNIRPONTAS, UNIRVARIASPONTAS e
+      MOSTRARABERTOS).
+
+
+------------------------------------------------------------
+6.3 - EDICAO DAS PONTAS DE VOLTA NA ENTIDADE
+------------------------------------------------------------
+
+  UP:set-arc-angle (edata pt isStart)
+      Recalcula o angulo inicial (50) ou final (51) de um ARC para
+      que a ponta passe a apontar exatamente na direcao do ponto
+      "pt", usando (atan dY dX) a partir do centro. O RAIO e o
+      CENTRO do arco nunca mudam aqui - so o angulo, ou seja, a
+      ponta "escorrega" pelo proprio circulo do arco ate o ponto
+      alvo (por isso a regra da secao 3 diz que e sempre a ponta do
+      ARC que fica parada de verdade, e as outras entidades e que
+      se ajustam ate ela).
+
+  UP:set-poly-vertex (edata pt isFirst)
+      Troca o PRIMEIRO ou o ULTIMO vertice (codigo DXF 10) de uma
+      LWPOLYLINE pelo ponto "pt", reconstruindo a lista de
+      associacao (edata) inteira - precisa contar quantos vertices
+      (codigos 10) existem para saber qual e o "ultimo" antes de
+      decidir qual par de codigo 10 substituir.
+
+  UP:update-point (rec pt)
+      Funcao "despachante": olha o "whichCode" do registro do pool
+      (guardado por UP:build-pool) e decide qual das funcoes acima
+      chamar:
+        numero (10 ou 11)    -> LINE, troca o par (codigo . ponto)
+                                 direto com subst
+        "SA" / "EA"          -> ARC, chama UP:set-arc-angle
+        "FIRSTVTX"/"LASTVTX" -> LWPOLYLINE, chama UP:set-poly-vertex
+      No final, sempre chama (entmod edata) + (entupd ename) para
+      gravar a mudanca de fato na entidade do desenho.
+
+
+------------------------------------------------------------
+6.4 - UP:unir - A REGRA DE UNIAO (usada pelos 3 comandos)
+------------------------------------------------------------
+
+  UP:unir (matched)
+      Recebe uma lista de registros do pool (2 ou mais pontas que
+      devem virar uma so) e aplica a regra da secao 3:
+        1. Procura se existe algum ARC entre os registros
+           (percorrendo "matched" uma vez). Se achar, guarda esse
+           registro em "refRec" e marca "temArco".
+        2. Se temArco: o ponto-alvo ("target") e exatamente o ponto
+           do ARC (refRec nao e movido).
+        3. Se NAO houver ARC: o ponto-alvo e a MEDIA aritmetica
+           (soma de todos os X / quantidade, soma de todos os Y /
+           quantidade) entre todas as pontas do grupo.
+        4. Percorre "matched" de novo chamando UP:update-point em
+           cada registro DIFERENTE de refRec (o ARC, se existir,
+           nunca e movido - so os outros).
+      Devolve o ponto "target" usado, so para a mensagem de
+      confirmacao mostrada ao usuario.
+      Por ser uma funcao isolada, os tres comandos (UNIRPONTAS,
+      UNIRVARIASPONTAS, e indiretamente a logica de agrupamento
+      usada antes do MOSTRARABERTOS) reaproveitam exatamente a
+      mesma regra, sem duplicar codigo.
+
+
+------------------------------------------------------------
+6.5 - CAMADA E QUADRADO-CURSOR (usados so pelo UNIRPONTAS)
+------------------------------------------------------------
+
+  UP:ensure-layer (layerName colorIdx)
+      Cria a camada, com a cor ACI indicada, SE ela ainda nao
+      existir (tblsearch verifica isso antes) - mesma ideia do
+      MEDLIN.lsp, aqui usada para garantir a camada
+      UNIRPONTAS_CURSOR (usada pelo quadrado que segue o mouse) e,
+      dentro do MOSTRARABERTOS, a camada MOSTRARABERTOS_MARCA.
+
+  UP:make-square-ent (pt tol layerName)
+      Cria uma LWPOLYLINE FECHADA real (4 vertices, um quadrado de
+      meio-lado "tol" centralizado em "pt"), via entmakex (que
+      devolve o nome da entidade, diferente de entmake, para poder
+      ser apagada com entdel logo depois). Por ser uma entidade de
+      verdade (e nao um desenho de pixel via grdraw/redraw), o
+      proprio DraftSight cuida do redesenho dela automaticamente -
+      isso evita o "rastro" que ficava na tela em versoes antigas
+      que desenhavam o quadrado manualmente.
+
+
+------------------------------------------------------------
+6.6 - c:UNIRPONTAS - MODO INTERATIVO (loop de grread)
+------------------------------------------------------------
+
+Fases principais dentro de c:UNIRPONTAS:
+
+  1. Pergunta a tolerancia (getdist), usando *UP-TOL-PADRAO* se o
+     usuario so der ENTER. Se <= 0, cancela.
+
+  2. Faz a selecao (ssget) com filtro (cons 0 "LINE,ARC,LWPOLYLINE")
+     E (cons 8 "~MEDLIN_MARCADOR,MEDLIN_COTAS,UNIRPONTAS_CURSOR,
+     MOSTRARABERTOS_MARCA") - o "~" na frente significa "NAO",
+     excluindo objetos que ja sejam marcacoes do proprio MEDLIN.lsp
+     ou do proprio UNIRPONTAS.lsp (evita que o quadrado-cursor ou um
+     circulo de diagnostico entrem por engano na selecao).
+
+  3. Monta o pool inicial com UP:build-pool.
+
+  4. Entra num laco "while" que fica lendo eventos com
+     (grread T 15 0) - o "T" pede que o grread tambem devolva
+     movimentos do mouse (nao so cliques), o "15" habilita o modo
+     que inclui movimento + clique + tecla:
+       - codigo 5 (movimento do mouse): apaga o quadrado anterior
+         (entdel) e cria um novo na posicao atual (UP:make-square-
+         ent), dando o efeito de "quadrado seguindo o cursor".
+       - codigo 3 (clique do botao esquerdo): apaga o quadrado,
+         percorre o pool inteiro comparando cada ponta com o ponto
+         clicado (diferenca em X e em Y, cada uma <= tol
+         separadamente - um teste de "caixa", nao de distancia
+         circular), junta tudo que caiu dentro em "matched". Se
+         "matched" tiver 2 ou mais registros, chama UP:unir e
+         RECALCULA o pool inteiro (UP:build-pool de novo, ja que as
+         entidades editadas mudaram de posicao); se tiver 0 ou 1,
+         avisa que nao achou par.
+       - codigo 2 com valor 27 (tecla ESC): apaga o quadrado se
+         existir e marca exitLoop = T, encerrando o laco.
+
+  5. Ao sair do laco, imprime "Modo UNIRPONTAS encerrado."
+
+
+------------------------------------------------------------
+6.7 - TRATAMENTO DE ERRO (*error* dentro de c:UNIRPONTAS e
+      c:MOSTRARABERTOS)
+------------------------------------------------------------
+
+Tanto c:UNIRPONTAS quanto c:MOSTRARABERTOS substituem a funcao
+*error* padrao do DraftSight no inicio, por uma versao propria que:
+  - c:UNIRPONTAS: apaga o quadrado-cursor (cursorEnt), se ainda
+    existir - importante porque um ESC/cancelamento no meio do
+    grread pode gerar uma saida "abrupta" que pularia a linha de
+    limpeza normal do laco.
+  - c:MOSTRARABERTOS: limpa toda a camada MOSTRARABERTOS_MARCA
+    (UP:limpar-camada), removendo os circulos vermelhos mesmo que o
+    comando seja interrompido de forma inesperada.
+  - Nos dois casos: devolve o *error* original do DraftSight antes
+    de terminar, para nao deixar a substituicao "vazando" para
+    outros comandos, e evita imprimir mensagem de erro para
+    cancelamentos normais (ESC / "Function cancelled").
+c:UNIRVARIASPONTAS nao precisa dessa protecao porque e uma operacao
+unica, sem laco de espera de mouse - termina (ou cancela) numa unica
+passada, sem deixar entidades temporarias penduradas.
+
+
+------------------------------------------------------------
+6.8 - FUNCOES DE AGRUPAMENTO (usadas por UNIRVARIASPONTAS)
+------------------------------------------------------------
+
+  UP:limpar-camada (layerName)
+      Apaga TODAS as entidades de uma camada, usando
+      (ssget "_X" (list (cons 8 layerName))) - que procura em todo
+      o desenho, nao so no que esta visivel na tela - seguido de
+      "_.ERASE". Usada pelo MOSTRARABERTOS para remover os circulos
+      ao sair (secao 6.9), inclusive sobras de uma execucao
+      anterior interrompida.
+
+  UP:tem-par (idx pool tol)
+      Verdadeiro se o ponto do registro (nth idx pool) tiver algum
+      OUTRO ponto do pool dentro da tolerancia (teste de caixa em X
+      e Y, igual ao clique do UNIRPONTAS). Usada pelo MOSTRARABERTOS
+      (secao 6.9) para decidir se uma ponta esta "aberta" ou nao -
+      ali e chamada com a tolerancia fixa *UP-EPS-COINCIDENCIA*, nao
+      com a tolerancia digitada pelo usuario.
+
+  UP:perto-de-grupo (p grupo tol)
+      Verdadeiro se o registro "p" estiver dentro da tolerancia de
+      QUALQUER membro do "grupo" (nao so do primeiro) - a peca
+      basica que permite o agrupamento "em cadeia" descrito a
+      seguir.
+
+  UP:cluster-pool (pool tol)
+      Agrupa o pool inteiro em "clusters" (grupos) de pontas
+      proximas, EM CADEIA: comeca um grupo novo com o primeiro
+      registro restante, e fica repetindo - enquanto algum registro
+      restante estiver perto de QUALQUER membro do grupo atual
+      (UP:perto-de-grupo), ele entra no grupo e sai da lista de
+      restantes; quando uma rodada inteira nao adiciona mais
+      ninguem ("mudou" continua nil), o grupo atual fecha e um novo
+      comeca com o proximo restante. Repete ate a lista de
+      restantes esvaziar. Devolve a lista de todos os grupos
+      formados.
+      Esse e o mecanismo que faz, por exemplo, A perto de B e B
+      perto de C entrarem no MESMO grupo mesmo que A e C estejam
+      longe um do outro (secao 3).
+
+
+------------------------------------------------------------
+6.9 - c:UNIRVARIASPONTAS - OPERACAO UNICA
+------------------------------------------------------------
+
+  1. Pergunta a tolerancia (mesmo padrao de c:UNIRPONTAS).
+  2. Pede para selecionar a area/objetos (mesmo filtro de ssget das
+     secoes 6.6/6.2 - exclui camadas de marcacao do MEDLIN.lsp e do
+     proprio UNIRPONTAS.lsp).
+  3. Monta o pool (UP:build-pool) e agrupa tudo de uma vez com
+     UP:cluster-pool.
+  4. Para cada grupo com 2 ou mais registros, chama UP:unir (a
+     MESMA funcao usada pelo modo interativo - secao 6.4) e soma
+     contadores de quantos grupos e quantas pontas ao todo foram
+     unidos.
+  5. Imprime o resumo final ("N grupo(s) unido(s), totalizando M
+     ponta(s)") ou avisa que nada foi encontrado dentro da
+     tolerancia.
+  Repare que este comando NAO usa grread nem laco de espera - roda
+  uma unica vez e termina, por isso tambem nao precisa de uma
+  funcao *error* propria (secao 6.7).
+
+
+------------------------------------------------------------
+6.10 - c:MOSTRARABERTOS - MODO DE DIAGNOSTICO
+------------------------------------------------------------
+
+  1. Substitui *error* (secao 6.7) e garante/limpa a camada
+     MOSTRARABERTOS_MARCA antes de comecar (cobre o caso de uma
+     execucao anterior ter sido interrompida sem dar ESC).
+  2. Faz a selecao (mesmo filtro das secoes 6.6/6.9) e monta o pool.
+  3. Para CADA ponta do pool, chama UP:tem-par usando a margem fixa
+     *UP-EPS-COINCIDENCIA* (NAO a tolerancia do usuario - aqui o
+     objetivo e achar coincidencia REAL). Se NAO tiver par, desenha
+     um CIRCLE (entmake direto, raio = *UP-DIAMETRO-ABERTO*/2) na
+     camada MOSTRARABERTOS_MARCA, centralizado exatamente na ponta
+     aberta.
+  4. Informa quantas pontas abertas foram encontradas.
+  5. Se houver pelo menos uma, entra num laco simples esperando
+     ESC via grread (so verifica o cancelamento, nao segue o mouse
+     como o c:UNIRPONTAS) e, ao sair, chama UP:limpar-camada para
+     remover todos os circulos - eles sao so uma marcacao visual
+     temporaria, nunca ficam salvos permanentemente no desenho.
+  Se nao houver nenhuma ponta aberta, o comando termina sozinho sem
+  entrar no laco de espera (nao ha nada para limpar depois).
+
+
+------------------------------------------------------------
+6.11 - IDEIAS PARA QUEM FOR ADAPTAR ESTE CODIGO
+------------------------------------------------------------
+
+  - Para dar suporte a mais tipos de entidade (ex: POLYLINE antiga,
+    ELIPSE, SPLINE), seria necessario adicionar um novo "case" em
+    UP:get-endpoints (secao 6.2) que devolva as pontas daquele tipo
+    no mesmo formato (list ponto codigoOuTag), mais o tratamento
+    correspondente em UP:update-point (secao 6.3), e incluir o tipo
+    no filtro do ssget (presente em c:UNIRPONTAS,
+    c:UNIRVARIASPONTAS e c:MOSTRARABERTOS).
+
+  - Para mudar a regra de uniao (por exemplo, priorizar sempre a
+    entidade "mais comprida" em vez do ARC, ou pedir para o usuario
+    escolher qual ponta fica parada), edite so a funcao UP:unir
+    (secao 6.4) - como ela e compartilhada pelos tres comandos, a
+    mudanca vale para todos de uma vez.
+
+  - Para tornar a tolerancia do MOSTRARABERTOS configuravel (em vez
+    de usar sempre *UP-EPS-COINCIDENCIA*), bastaria trocar essa
+    constante por uma pergunta getdist no inicio de
+    c:MOSTRARABERTOS - hoje ela e fixa de proposito, para o
+    diagnostico refletir coincidencia geometrica real.
+
+  - Para reaproveitar a logica de agrupamento em cadeia (UP:cluster-
+    pool, secao 6.8) em outro comando (por exemplo, para contar
+    quantas "pecas" desconexas existem numa selecao), essa funcao
+    ja devolve a lista de grupos pronta, sem depender de nenhuma
+    outra parte especifica do UNIRPONTAS.lsp.
+
+============================================================
+FIM DA EXPLICACAO
+============================================================
